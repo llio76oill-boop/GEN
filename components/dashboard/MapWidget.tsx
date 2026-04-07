@@ -45,19 +45,19 @@ export default function MapWidget() {
       </div>
 
       <div
-        className="absolute top-0 inset-x-0 flex items-center justify-between p-3 pointer-events-none"
+        className="absolute top-0 inset-x-0 flex items-center justify-between p-2 sm:p-3 pointer-events-none"
         style={{ zIndex: 1001 }}
       >
         <div
-          className="flex items-center gap-2.5 px-3 py-2 rounded-xl pointer-events-auto"
+          className="flex items-center gap-1.5 sm:gap-2.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl pointer-events-auto"
           style={{ background: 'var(--bg-card)', backdropFilter: 'blur(20px)', border: '1px solid var(--border-normal)' }}
         >
           <Signal className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-          <span className="text-sm font-semibold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+          <span className="text-xs sm:text-sm font-semibold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
             الرمادي - محافظة الأنبار
           </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse block" />
-          <span className="text-xs text-[var(--text-4)]">مباشر</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse block hidden sm:block" />
+          <span className="text-xs text-[var(--text-4)] hidden sm:inline">مباشر</span>
         </div>
         <div className="flex items-center gap-1.5 pointer-events-auto">
           {[{ icon: Layers, title: 'الطبقات' }, { icon: Maximize2, title: 'تكبير' }].map(({ icon: Icon, title }) => (
@@ -73,7 +73,7 @@ export default function MapWidget() {
       </div>
 
       <div className="absolute bottom-0 inset-x-0 p-3 pointer-events-none" style={{ zIndex: 1001 }}>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {stats.map((s) => (
             <div
               key={s.key}

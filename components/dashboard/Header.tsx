@@ -25,10 +25,10 @@ export default function Header({ onMenuToggle }: { onMenuToggle: () => void }) {
         borderBottom: '1px solid var(--border-subtle)',
       }}
     >
-      {/* Menu toggle */}
+      {/* Menu toggle — hidden on mobile (sidebar hidden, bottom nav used) */}
       <button
         onClick={onMenuToggle}
-        className="p-2 rounded-xl transition-colors flex-shrink-0"
+        className="hidden md:block p-2 rounded-xl transition-colors flex-shrink-0"
         style={{ color: 'var(--text-4)' }}
         onMouseEnter={(e) => { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = 'var(--text-1)'; }}
         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-4)'; }}

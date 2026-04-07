@@ -30,9 +30,9 @@ export default function MapPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-3" style={{ height: 'calc(100vh - 9rem)' }}>
+    <div className="flex flex-col gap-3" style={{ height: 'calc(100vh - 9rem - env(safe-area-inset-bottom, 0px))' }}>
       {/* Stats Row */}
-      <div className="grid grid-cols-4 gap-3 flex-shrink-0">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-shrink-0">
         {stats.map((s) => (
           <div
             key={s.key}
@@ -63,14 +63,14 @@ export default function MapPage() {
           style={{ zIndex: 1001 }}
         >
           <div
-            className="flex items-center gap-2.5 px-3 py-2 rounded-xl"
+            className="flex items-center gap-1.5 sm:gap-2.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl"
             style={{ background: 'rgba(6,6,14,0.88)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}
           >
             <Signal className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-              خريطة الرمادي التفاعلية — محافظة الأنبار
+            <span className="text-xs sm:text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+              خريطة الرمادي التفاعلية
             </span>
-            <span className="text-xs text-gray-500">300 مولد مرسوم • انقر لمزيد من التفاصيل</span>
+            <span className="text-xs text-gray-500 hidden sm:inline">300 مولد مرسوم • انقر لمزيد من التفاصيل</span>
           </div>
         </div>
 
