@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Sun,
   Moon,
+  Power,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -221,16 +222,30 @@ export default function OwnersDashboardPage() {
         <h1 className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>
           لوحة تحكم المالك
         </h1>
-        <button
-          onClick={toggle}
-          className="p-2 rounded-full transition-all"
-          style={{
-            background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-            color: 'var(--text-1)',
-          }}
-        >
-          {isDark ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => router.push('/owners/control-room')}
+            className="p-2 rounded-full transition-all"
+            style={{
+              background: 'rgba(16,185,129,0.1)',
+              color: '#10b981',
+              border: '1px solid rgba(16,185,129,0.25)',
+            }}
+            title="غرفة التحكم"
+          >
+            <Power className="w-4 h-4" />
+          </button>
+          <button
+            onClick={toggle}
+            className="p-2 rounded-full transition-all"
+            style={{
+              background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+              color: 'var(--text-1)',
+            }}
+          >
+            {isDark ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}

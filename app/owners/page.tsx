@@ -13,7 +13,7 @@ export default function OwnersPortalPage() {
 
   const handleAction = (action: 'add' | 'login') => {
     setLoading(action);
-    const dest = action === 'add' ? '/owners/add' : '/owners/dashboard';
+    const dest = action === 'add' ? '/owners/add' : '/owners/control-room';
     setTimeout(() => router.push(dest), 700);
   };
 
