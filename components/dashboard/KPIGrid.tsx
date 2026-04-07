@@ -97,7 +97,7 @@ export default function KPIGrid() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
 
-      {/* ? Total power produced */}
+      {/* ? Total power produced + consumed */}
       <motion.div
         initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
         className="glass-card p-4 col-span-2 sm:col-span-1"
@@ -105,18 +105,38 @@ export default function KPIGrid() {
         <div className="flex items-center gap-2 mb-2">
           <Zap className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
           <span className="text-xs text-[var(--text-4)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-            إجمالي الإنتاج
+            الطاقة المنتجة
           </span>
         </div>
         <div className="text-3xl font-bold text-[var(--text-1)] mb-0.5">
           <Counter to={1847} />
           <span className="text-sm text-[var(--text-4)] font-normal ms-1">MW</span>
         </div>
-        <div className="flex items-center gap-1 text-emerald-500 dark:text-emerald-400 text-xs mb-3"
+        <div className="flex items-center gap-1 text-emerald-500 dark:text-emerald-400 text-xs mb-2"
              style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
           <TrendingUp className="w-3 h-3" />
           <span>+4.2% من الأمس</span>
         </div>
+
+        {/* Consumed energy bar */}
+        <div className="mb-2">
+          <div className="flex justify-between text-[10px] mb-1" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+            <span style={{ color: 'var(--text-4)' }}>المستهلكة</span>
+            <span className="font-bold" style={{ color: '#f59e0b' }}>1,367 MW</span>
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
+            <motion.div
+              className="h-full rounded-full bg-amber-500"
+              initial={{ width: '0%' }}
+              animate={{ width: '74%' }}
+              transition={{ duration: 1.2, delay: 0.5, ease: 'easeOut' }}
+            />
+          </div>
+          <p className="text-[9px] mt-1" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
+            ٧٤% نسبة الاستهلاك من الإنتاج
+          </p>
+        </div>
+
         <div className="h-12"><Sparkline data={POWER_24H} color="#10b981" /></div>
       </motion.div>
 
