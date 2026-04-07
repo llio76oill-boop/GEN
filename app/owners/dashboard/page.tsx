@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
+import { supabase } from '@/lib/supabase';
 
 interface PendingOperator {
   id: number;
@@ -181,13 +182,16 @@ export default function OwnersDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/generators-pending')
-      .then((r) => r.json())
-      .then((data) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('generators_pending')
+          .select('*, pending_operators(*)')
+          .order('created_at', { ascending: false });
         if (Array.isArray(data)) setRequests(data);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      } catch {}
+      finally { setLoading(false); }
+    })();
   }, []);
 
   const TABS = [

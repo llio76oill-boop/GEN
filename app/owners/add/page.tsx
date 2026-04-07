@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { RAMADI_AREAS } from '@/data/generators';
+import { supabase } from '@/lib/supabase';
 
 const LocationPicker = dynamic(() => import('@/components/owners/LocationPicker'), { ssr: false });
 
@@ -111,12 +112,32 @@ export default function AddGeneratorPage() {
   const onSubmit = async (data: FormValues) => {
     setSubmitting(true);
     try {
-      const res = await fetch('/api/generators-pending', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error('فشل الإرسال');
+      const { data: gen, error: genErr } = await supabase
+        .from('generators_pending')
+        .insert({
+          owner_name: data.ownerName,
+          owner_phone: data.ownerPhone,
+          license_no: data.licenseNo,
+          lat: data.lat,
+          lng: data.lng,
+          fuel_quota: data.fuelQuota || 0,
+          price_per_hour: 38,
+          status: 'pending',
+        })
+        .select('id')
+        .single();
+      if (genErr) throw genErr;
+
+      const opRows = data.operators.map((op) => ({
+        pending_gen_id: gen.id,
+        name: op.name,
+        phone: op.phone,
+        shift_start: op.shiftStart,
+        shift_end: op.shiftEnd,
+      }));
+      const { error: opErr } = await supabase.from('pending_operators').insert(opRows);
+      if (opErr) throw opErr;
+
       setSubmitted(true);
     } catch {
       alert('حدث خطأ أثناء إرسال الطلب. حاول مرة أخرى.');

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 type TabKey = 'general' | 'notifications' | 'display' | 'connection' | 'data';
 
@@ -150,10 +151,12 @@ function DataTab() {
     setDeleting(true);
     setDeleteResult(null);
     try {
-      const res = await fetch('/api/mock-data', { method: 'DELETE' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
-      const total = Object.values(json.deleted as Record<string, number>).reduce((a: number, b: number) => a + b, 0);
+      const tables = ['notifications', 'faults', 'operators', 'owned_generators', 'owners', 'generators'] as const;
+      let total = 0;
+      for (const t of tables) {
+        const { data } = await supabase.from(t).delete().eq('is_mock', true).select();
+        total += data?.length ?? 0;
+      }
       setDeleteResult(`✓ تم حذف ${total} سجل وهمي بنجاح`);
     } catch (err: unknown) {
       setDeleteResult(`✗ فشل الحذف: ${err instanceof Error ? err.message : 'خطأ غير معروف'}`);
@@ -167,10 +170,7 @@ function DataTab() {
     setSeeding(true);
     setSeedResult(null);
     try {
-      const res = await fetch('/api/mock-data/seed', { method: 'POST' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
-      setSeedResult('✓ تم إعادة إدخال البيانات الوهمية بنجاح');
+      setSeedResult('⚠ إعادة الإدخال متاحة فقط من خلال سكربت السيرفر');
     } catch (err: unknown) {
       setSeedResult(`✗ فشل الإدخال: ${err instanceof Error ? err.message : 'خطأ غير معروف'}`);
     } finally {
