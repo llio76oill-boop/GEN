@@ -1,3 +1,9 @@
 [build]
   command = "npm run build"
   publish = "out"
+
+# Suppress Next.js RSC prefetch 404s on static export
+[[headers]]
+  for = "/*/__next.*"
+  [headers.values]
+    Cache-Control = "no-store"
