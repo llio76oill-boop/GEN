@@ -1,8 +1,53 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* === Dark theme (default) === */
+  --background: #080810;
+  --foreground: #ededed;
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.08);
+  --primary: #10b981;
+  --primary-glow: rgba(16, 185, 129, 0.3);
+  --blue-glow: rgba(59, 130, 246, 0.3);
+  --purple-glow: rgba(168, 85, 247, 0.3);
+
+  /* Component-specific */
+  --bg-sidebar: rgba(6, 6, 14, 0.95);
+  --bg-header:  rgba(6, 6, 14, 0.85);
+  --bg-card:    rgba(255, 255, 255, 0.04);
+  --bg-card-hover: rgba(255, 255, 255, 0.07);
+  --bg-nav-hover:  rgba(255, 255, 255, 0.04);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-normal: rgba(255, 255, 255, 0.08);
+  --text-1: #ffffff;
+  --text-2: #d1d5db;
+  --text-3: #9ca3af;
+  --text-4: #6b7280;
+  --text-5: #4b5563;
+}
+
+/* === Light theme overrides === */
+[data-theme="light"] {
+  --background: #eef2f7;
+  --foreground: #0f172a;
+  --surface: rgba(255, 255, 255, 0.80);
+  --surface-hover: rgba(255, 255, 255, 0.95);
+  --border: rgba(0, 0, 0, 0.08);
+
+  --bg-sidebar: rgba(255, 255, 255, 0.97);
+  --bg-header:  rgba(248, 250, 252, 0.92);
+  --bg-card:    rgba(255, 255, 255, 0.88);
+  --bg-card-hover: rgba(255, 255, 255, 1);
+  --bg-nav-hover:  rgba(0, 0, 0, 0.04);
+  --border-subtle: rgba(0, 0, 0, 0.07);
+  --border-normal: rgba(0, 0, 0, 0.09);
+  --text-1: #0f172a;
+  --text-2: #1e293b;
+  --text-3: #475569;
+  --text-4: #64748b;
+  --text-5: #94a3b8;
 }
 
 @theme inline {
@@ -10,17 +55,148 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-arabic: var(--font-ibm-arabic);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Smooth theme switch — only active during transition class */
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition:
+    background-color 0.28s ease,
+    border-color 0.28s ease,
+    color 0.28s ease,
+    box-shadow 0.28s ease !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 100px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+@layer utilities {
+  .glass {
+    backdrop-filter: blur(24px) saturate(180%);
+    background: var(--bg-card);
+    border: 1px solid var(--border-normal);
+  }
+  .glass-card {
+    backdrop-filter: blur(16px) saturate(150%);
+    background: var(--bg-card);
+    border: 1px solid var(--border-normal);
+    border-radius: 1rem;
+  }
+  [data-theme="light"] .glass-card,
+  [data-theme="light"] .glass {
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+  }
+  .text-gradient {
+    background: linear-gradient(to right, var(--text-1), var(--text-3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  [data-theme="dark"] .text-gradient {
+    background: linear-gradient(to right, #ffffff, rgba(255,255,255,0.55));
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .glow-green { filter: drop-shadow(0 0 12px rgba(16,185,129,0.7)); }
+  .glow-blue  { filter: drop-shadow(0 0 12px rgba(59,130,246,0.7)); }
+  .glow-red   { filter: drop-shadow(0 0 12px rgba(239,68,68,0.7)); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.15; }
+}
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.05) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+}
+.animate-blink { animation: blink 1.2s ease-in-out infinite; }
+.pulse-ring    { animation: pulse-ring 2s ease-out infinite; }
+
+/* ── Leaflet dark theme overrides ── */
+.leaflet-container {
+  background: #0d0d1a !important;
+  font-family: var(--font-ibm-arabic), var(--font-geist-sans), sans-serif;
+}
+.leaflet-popup-content-wrapper {
+  background: rgba(6, 6, 20, 0.97) !important;
+  color: #e5e7eb !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  backdrop-filter: blur(20px);
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+}
+.leaflet-popup-content {
+  direction: rtl;
+  font-family: var(--font-ibm-arabic), sans-serif;
+  font-size: 12px;
+  line-height: 2;
+  color: #d1d5db !important;
+  margin: 10px 14px !important;
+}
+.leaflet-popup-tip-container .leaflet-popup-tip {
+  background: rgba(6, 6, 20, 0.97) !important;
+}
+.leaflet-popup-close-button {
+  color: rgba(255,255,255,0.4) !important;
+  font-size: 18px !important;
+  top: 6px !important;
+  right: 8px !important;
+}
+.leaflet-popup-close-button:hover { color: white !important; }
+.leaflet-control-zoom a {
+  background: rgba(6, 6, 20, 0.92) !important;
+  color: #9ca3af !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: rgba(255,255,255,0.1) !important;
+  color: white !important;
+}
+.leaflet-bar {
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important;
+}
+.leaflet-bar a { border-bottom-color: rgba(255,255,255,0.06) !important; }
+.leaflet-control-attribution {
+  background: rgba(6, 6, 20, 0.7) !important;
+  color: rgba(255,255,255,0.2) !important;
+  font-size: 9px !important;
+  border-radius: 4px 0 0 0;
+}
+.leaflet-control-attribution a { color: rgba(255,255,255,0.35) !important; }
+.leaflet-control-scale-line {
+  background: rgba(6, 6, 20, 0.8) !important;
+  border-color: rgba(255,255,255,0.25) !important;
+  color: rgba(255,255,255,0.5) !important;
+  font-size: 9px !important;
 }
