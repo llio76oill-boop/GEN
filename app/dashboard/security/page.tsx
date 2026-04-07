@@ -42,22 +42,22 @@ export default function SecurityPage() {
   return (
     <div className="space-y-5 max-w-3xl">
       <div>
-        <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>الأمان والصلاحيات</h1>
-        <p className="text-sm text-gray-500 mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>إدارة مفاتيح الوصول والجلسات النشطة</p>
+        <h1 className="text-xl font-bold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>الأمان والصلاحيات</h1>
+        <p className="text-sm text-[var(--text-4)] mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>إدارة مفاتيح الوصول والجلسات النشطة</p>
       </div>
 
       {/* API Keys */}
       <div className="glass-card p-5 space-y-4">
         <div className="flex items-center gap-2 mb-1">
           <Key className="w-4 h-4 text-emerald-400" />
-          <h2 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>مفاتيح API</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>مفاتيح API</h2>
         </div>
         {API_KEYS.map((k) => (
           <div key={k.id} className="rounded-xl p-3.5 space-y-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-200" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{k.label}</span>
+              <span className="text-sm font-medium text-[var(--text-2)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{k.label}</span>
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-gray-600" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>آخر استخدام: {k.lastUsed}</span>
+                <span className="text-[10px] text-[var(--text-5)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>آخر استخدام: {k.lastUsed}</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -67,17 +67,17 @@ export default function SecurityPage() {
               >
                 {revealed[k.id] ? k.value : mask(k.value)}
               </code>
-              <button onClick={() => toggle(k.id)} className="p-2 rounded-lg hover:bg-white/10 transition-colors" title={revealed[k.id] ? 'إخفاء' : 'إظهار'}>
-                {revealed[k.id] ? <EyeOff className="w-4 h-4 text-gray-500" /> : <Eye className="w-4 h-4 text-gray-500" />}
+              <button onClick={() => toggle(k.id)} className="p-2 rounded-lg hover:bg-[var(--surface-hover)] transition-colors" title={revealed[k.id] ? 'إخفاء' : 'إظهار'}>
+                {revealed[k.id] ? <EyeOff className="w-4 h-4 text-[var(--text-4)]" /> : <Eye className="w-4 h-4 text-[var(--text-4)]" />}
               </button>
-              <button onClick={() => copy(k.id, k.value)} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                {copied[k.id] ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-gray-500" />}
+              <button onClick={() => copy(k.id, k.value)} className="p-2 rounded-lg hover:bg-[var(--surface-hover)] transition-colors">
+                {copied[k.id] ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-[var(--text-4)]" />}
               </button>
-              <button className="p-2 rounded-lg hover:bg-white/10 transition-colors" title="إعادة توليد">
-                <RefreshCw className="w-4 h-4 text-gray-500" />
+              <button className="p-2 rounded-lg hover:bg-[var(--surface-hover)] transition-colors" title="إعادة توليد">
+                <RefreshCw className="w-4 h-4 text-[var(--text-4)]" />
               </button>
             </div>
-            <p className="text-[10px] text-gray-700" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>أُنشئ: {k.created}</p>
+            <p className="text-[10px] text-[var(--text-5)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>أُنشئ: {k.created}</p>
           </div>
         ))}
       </div>
@@ -86,20 +86,20 @@ export default function SecurityPage() {
       <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <Shield className="w-4 h-4 text-blue-400" />
-          <h2 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>الجلسات النشطة</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>الجلسات النشطة</h2>
         </div>
         <div className="space-y-2">
           {SESSIONS.map((s, i) => (
             <div key={i} className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="flex items-center gap-3">
-                <User className="w-4 h-4 text-gray-600" />
+                <User className="w-4 h-4 text-[var(--text-5)]" />
                 <div>
-                  <p className="text-xs font-medium text-gray-300" dir="ltr">{s.device}</p>
-                  <p className="text-[10px] text-gray-600" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{s.location} · {s.ip}</p>
+                  <p className="text-xs font-medium text-[var(--text-2)]" dir="ltr">{s.device}</p>
+                  <p className="text-[10px] text-[var(--text-5)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{s.location} · {s.ip}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <p className="text-[10px] text-gray-600" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{s.since}</p>
+                <p className="text-[10px] text-[var(--text-5)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{s.since}</p>
                 {s.current ? (
                   <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', fontFamily: 'var(--font-ibm-arabic)' }}>الجلسة الحالية</span>
                 ) : (
@@ -115,16 +115,16 @@ export default function SecurityPage() {
       <div className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <Clock className="w-4 h-4 text-orange-400" />
-          <h2 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>سجل النشاط</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>سجل النشاط</h2>
         </div>
         <div className="space-y-1">
           {AUDIT.map((a, i) => (
             <div key={i} className="flex items-center justify-between py-2.5 border-b last:border-b-0" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
               <div className="flex items-center gap-2.5">
                 <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: a.ok ? '#10b981' : '#ef4444' }} />
-                <span className="text-xs text-gray-300" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{a.action}</span>
+                <span className="text-xs text-[var(--text-2)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{a.action}</span>
               </div>
-              <div className="flex items-center gap-4 text-[10px] text-gray-600">
+              <div className="flex items-center gap-4 text-[10px] text-[var(--text-5)]">
                 <span dir="ltr">{a.user}</span>
                 <span style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{a.time}</span>
               </div>

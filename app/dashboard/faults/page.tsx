@@ -52,8 +52,8 @@ export default function FaultsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>مركز الأعطال</h1>
-          <p className="text-sm text-gray-500 mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+          <h1 className="text-xl font-bold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>مركز الأعطال</h1>
+          <p className="text-sm text-[var(--text-4)] mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
             إدارة ومتابعة أعطال مولدات الرمادي في الوقت الحقيقي
           </p>
         </div>
@@ -75,7 +75,7 @@ export default function FaultsPage() {
         ].map((s) => (
           <div key={s.label} className="glass-card p-4">
             <p className="text-3xl font-bold" style={{ color: s.color }}>{s.value}</p>
-            <p className="text-xs text-gray-500 mt-1" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{s.label}</p>
+            <p className="text-xs text-[var(--text-4)] mt-1" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{s.label}</p>
           </div>
         ))}
       </div>
@@ -91,7 +91,7 @@ export default function FaultsPage() {
               style={{
                 fontFamily: 'var(--font-ibm-arabic)',
                 background: filter === k ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: filter === k ? 'white' : '#6b7280',
+                color: filter === k ? 'var(--text-1)' : 'var(--text-4)',
               }}
             >
               {l}{' '}
@@ -100,13 +100,13 @@ export default function FaultsPage() {
           ))}
         </div>
         <div className="flex-1 relative min-w-48">
-          <Search className="absolute top-1/2 -translate-y-1/2 end-3 w-4 h-4 text-gray-600" />
+          <Search className="absolute top-1/2 -translate-y-1/2 end-3 w-4 h-4 text-[var(--text-5)]" />
           <input
             type="text"
             placeholder="بحث بالرقم أو الحي..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2 rounded-xl text-sm text-white placeholder-gray-600 outline-none transition-colors"
+            className="w-full px-4 py-2 rounded-xl text-sm text-[var(--text-1)] placeholder-[var(--text-5)] outline-none transition-colors"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', fontFamily: 'var(--font-ibm-arabic)' }}
           />
         </div>
@@ -121,7 +121,7 @@ export default function FaultsPage() {
                 {['رقم المولد', 'الحي', 'نوع العطل', 'الأولوية', 'القدرة KW', 'الإجراءات'].map((h) => (
                   <th
                     key={h}
-                    className="text-start px-4 py-3 text-xs text-gray-500 font-medium whitespace-nowrap"
+                    className="text-start px-4 py-3 text-xs text-[var(--text-4)] font-medium whitespace-nowrap"
                     style={{ fontFamily: 'var(--font-ibm-arabic)' }}
                   >
                     {h}
@@ -149,15 +149,15 @@ export default function FaultsPage() {
                         >
                           <Icon className="w-3.5 h-3.5" style={{ color: STATUS_COLOR[f.status] }} />
                         </div>
-                        <span className="font-mono text-white font-medium">
+                        <span className="font-mono text-[var(--text-1)] font-medium">
                           G-{String(f.id).padStart(4, '0')}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-400" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                    <td className="px-4 py-3 text-[var(--text-3)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
                       {f.area}
                     </td>
-                    <td className="px-4 py-3 text-gray-400" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                    <td className="px-4 py-3 text-[var(--text-3)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
                       {f.faultType}
                     </td>
                     <td className="px-4 py-3">
@@ -168,24 +168,24 @@ export default function FaultsPage() {
                         {cfg.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-400 font-mono">{f.power}</td>
+                    <td className="px-4 py-3 text-[var(--text-3)] font-mono">{f.power}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
                         <button
-                          className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-gray-600 hover:text-white"
+                          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors text-[var(--text-5)] hover:text-[var(--text-1)]"
                           title="تشخيص"
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-gray-600 hover:text-white"
+                          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors text-[var(--text-5)] hover:text-[var(--text-1)]"
                           title="تواصل"
                         >
                           <Phone className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => setResolved((p) => new Set(p).add(f.id))}
-                          className="p-1.5 rounded-lg hover:bg-emerald-500/20 transition-colors text-gray-600 hover:text-emerald-400"
+                          className="p-1.5 rounded-lg hover:bg-emerald-500/20 transition-colors text-[var(--text-5)] hover:text-emerald-400"
                           title="تم الحل"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -198,7 +198,7 @@ export default function FaultsPage() {
             </tbody>
           </table>
           {filtered.length === 0 && (
-            <div className="py-16 text-center text-gray-600" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+            <div className="py-16 text-center text-[var(--text-5)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
               لا توجد نتائج
             </div>
           )}

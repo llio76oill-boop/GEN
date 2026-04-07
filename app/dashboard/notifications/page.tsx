@@ -61,8 +61,8 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>الإشعارات</h1>
-          <p className="text-sm text-gray-500 mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+          <h1 className="text-xl font-bold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>الإشعارات</h1>
+          <p className="text-sm text-[var(--text-4)] mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
             {unreadCount} إشعار غير مقروء
           </p>
         </div>
@@ -87,7 +87,7 @@ export default function NotificationsPage() {
             style={{
               fontFamily: 'var(--font-ibm-arabic)',
               background: tab === k ? 'rgba(255,255,255,0.08)' : 'transparent',
-              color: tab === k ? 'white' : '#6b7280',
+              color: tab === k ? 'var(--text-1)' : 'var(--text-4)',
             }}
           >
             {l}
@@ -128,7 +128,7 @@ export default function NotificationsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                      <p className="text-sm font-semibold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
                         {n.title}
                       </p>
                       <span
@@ -138,14 +138,14 @@ export default function NotificationsPage() {
                         {cfg.label}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 leading-relaxed" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                    <p className="text-xs text-[var(--text-4)] leading-relaxed" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
                       {n.body}
                     </p>
-                    <p className="text-[10px] text-gray-700 mt-1">{n.time}</p>
+                    <p className="text-[10px] text-[var(--text-5)] mt-1">{n.time}</p>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); dismiss(n.id); }}
-                    className="text-gray-700 hover:text-white transition-colors flex-shrink-0 mt-0.5"
+                    className="text-[var(--text-5)] hover:text-[var(--text-1)] transition-colors flex-shrink-0 mt-0.5"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -156,8 +156,8 @@ export default function NotificationsPage() {
         </AnimatePresence>
         {filtered.length === 0 && (
           <div className="py-16 text-center">
-            <Bell className="w-10 h-10 text-gray-700 mx-auto mb-3" />
-            <p className="text-gray-600 text-sm" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+            <Bell className="w-10 h-10 text-[var(--text-5)] mx-auto mb-3" />
+            <p className="text-[var(--text-5)] text-sm" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
               لا توجد إشعارات
             </p>
           </div>

@@ -76,10 +76,10 @@ export default function DocsPage() {
   return (
     <div className="space-y-4 max-w-2xl">
       <div>
-        <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+        <h1 className="text-xl font-bold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
           سجل التحديثات
         </h1>
-        <p className="text-sm text-gray-500 mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+        <p className="text-sm text-[var(--text-4)] mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
           نظام إدارة الشبكة الكهربائية الذكية — S.P.G.M.S
         </p>
       </div>
@@ -97,8 +97,8 @@ export default function DocsPage() {
             className="glass-card p-3 flex flex-col items-center text-center gap-1"
           >
             <Icon className="w-5 h-5 text-emerald-400 mb-1" />
-            <p className="text-base font-bold text-white">{value}</p>
-            <p className="text-[10px] text-gray-600" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{label}</p>
+            <p className="text-base font-bold text-[var(--text-1)]">{value}</p>
+            <p className="text-[10px] text-[var(--text-5)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{label}</p>
           </div>
         ))}
       </div>
@@ -131,11 +131,11 @@ export default function DocsPage() {
                     >
                       {entry.version}
                     </span>
-                    <h3 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                    <h3 className="text-sm font-semibold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
                       {entry.title}
                     </h3>
                   </div>
-                  <span className="text-[10px] text-gray-600" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                  <span className="text-[10px] text-[var(--text-5)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
                     {entry.date}
                   </span>
                 </div>
@@ -151,7 +151,7 @@ export default function DocsPage() {
                         >
                           {cfg.label}
                         </span>
-                        <p className="text-xs text-gray-400 leading-relaxed" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                        <p className="text-xs text-[var(--text-3)] leading-relaxed" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
                           {item.text}
                         </p>
                       </li>

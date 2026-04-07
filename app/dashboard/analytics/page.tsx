@@ -64,8 +64,8 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>تحليلات الطاقة</h1>
-          <p className="text-sm text-gray-500 mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>بيانات الشبكة الكهربائية — الرمادي</p>
+          <h1 className="text-xl font-bold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>تحليلات الطاقة</h1>
+          <p className="text-sm text-[var(--text-4)] mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>بيانات الشبكة الكهربائية — الرمادي</p>
         </div>
         <div className="flex items-center gap-1 glass-card p-1">
           {(['24h', '7d', '30d'] as Range[]).map((r) => (
@@ -75,7 +75,7 @@ export default function AnalyticsPage() {
               className="px-3 py-1.5 rounded-lg text-sm transition-all"
               style={{
                 background: range === r ? 'rgba(16,185,129,0.15)' : 'transparent',
-                color: range === r ? '#10b981' : '#6b7280',
+                color: range === r ? '#10b981' : 'var(--text-4)',
                 fontFamily: 'var(--font-ibm-arabic)',
               }}
             >
@@ -101,9 +101,9 @@ export default function AnalyticsPage() {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${k.color}18` }}>
                   <Icon className="w-4 h-4" style={{ color: k.color }} />
                 </div>
-                <span className="text-xs text-gray-500" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{k.label}</span>
+                <span className="text-xs text-[var(--text-4)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{k.label}</span>
               </div>
-              <p className="text-2xl font-bold text-white mb-1">{k.value}</p>
+              <p className="text-2xl font-bold text-[var(--text-1)] mb-1">{k.value}</p>
               <div className="flex items-center gap-1" style={{ color: up ? '#10b981' : '#ef4444' }}>
                 {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                 <span className="text-xs">{up ? '+' : ''}{k.trend}%</span>
@@ -116,15 +116,15 @@ export default function AnalyticsPage() {
       {/* Main Chart */}
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-gray-300" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+          <h2 className="text-sm font-semibold text-[var(--text-2)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
             منحنى إنتاج الطاقة — آخر {LABELS[range]}
           </h2>
-          <span className="text-xs text-gray-600">{range === '24h' ? 'MW بالساعة' : 'MW يومياً'}</span>
+          <span className="text-xs text-[var(--text-5)]">{range === '24h' ? 'MW بالساعة' : 'MW يومياً'}</span>
         </div>
         <div className="h-40">
           <MiniChart data={data} color="#10b981" />
         </div>
-        <div className="flex justify-between text-[10px] text-gray-700 mt-1 px-1" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+        <div className="flex justify-between text-[10px] text-[var(--text-5)] mt-1 px-1" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
           <span>{range === '24h' ? '00:00' : 'اليوم 1'}</span>
           <span>{range === '24h' ? '23:00' : `اليوم ${data.length}`}</span>
         </div>
@@ -132,7 +132,7 @@ export default function AnalyticsPage() {
 
       {/* Area Breakdown */}
       <div className="glass-card p-5">
-        <h2 className="text-sm font-semibold text-gray-300 mb-4" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+        <h2 className="text-sm font-semibold text-[var(--text-2)] mb-4" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
           التوزيع الجغرافي — الأحياء
         </h2>
         <div className="space-y-3">
@@ -140,7 +140,7 @@ export default function AnalyticsPage() {
             const pct = a.total > 0 ? Math.round((a.online / a.total) * 100) : 0;
             return (
               <div key={a.name} className="flex items-center gap-3">
-                <span className="text-xs text-gray-400 w-20 flex-shrink-0 text-end" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                <span className="text-xs text-[var(--text-3)] w-20 flex-shrink-0 text-end" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
                   {a.name}
                 </span>
                 <div className="flex-1 h-2 rounded-full bg-white/[0.05] overflow-hidden">
@@ -152,7 +152,7 @@ export default function AnalyticsPage() {
                     transition={{ duration: 1, delay: 0.2 }}
                   />
                 </div>
-                <span className="text-xs text-gray-500 w-16 flex-shrink-0" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                <span className="text-xs text-[var(--text-4)] w-16 flex-shrink-0" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
                   {a.online}/{a.total} ({pct}%)
                 </span>
               </div>

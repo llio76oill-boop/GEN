@@ -44,15 +44,15 @@ export default function GeneratorsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+          <h1 className="text-xl font-bold text-[var(--text-1)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
             قائمة المولدات
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+          <p className="text-sm text-[var(--text-4)] mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
             الرمادي — محافظة الأنبار • {GENERATORS.length} مولد مسجل
           </p>
         </div>
         <button
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[var(--text-1)] transition-colors"
           style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', fontFamily: 'var(--font-ibm-arabic)' }}
         >
           <Plus className="w-4 h-4" />
@@ -71,7 +71,7 @@ export default function GeneratorsPage() {
         ].map((s) => (
           <div key={s.label} className="glass-card p-3">
             <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
-            <p className="text-xs text-gray-600 mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{s.label}</p>
+            <p className="text-xs text-[var(--text-5)] mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{s.label}</p>
           </div>
         ))}
       </div>
@@ -79,18 +79,18 @@ export default function GeneratorsPage() {
       {/* Toolbar */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-52">
-          <Search className="absolute top-1/2 -translate-y-1/2 end-3 w-4 h-4 text-gray-600" />
+          <Search className="absolute top-1/2 -translate-y-1/2 end-3 w-4 h-4 text-[var(--text-5)]" />
           <input
             type="text"
             placeholder="بحث برقم المولد أو اسم الحي..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full px-4 py-2 rounded-xl text-sm text-white placeholder-gray-600 outline-none"
+            className="w-full px-4 py-2 rounded-xl text-sm text-[var(--text-1)] placeholder-[var(--text-5)] outline-none"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', fontFamily: 'var(--font-ibm-arabic)' }}
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <Filter className="w-4 h-4 text-gray-600 flex-shrink-0" />
+          <Filter className="w-4 h-4 text-[var(--text-5)] flex-shrink-0" />
           <div className="flex items-center gap-1 glass-card p-1">
             <button
               onClick={() => handleFilterChange('all')}
@@ -98,7 +98,7 @@ export default function GeneratorsPage() {
               style={{
                 fontFamily: 'var(--font-ibm-arabic)',
                 background: statusFilter === 'all' ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: statusFilter === 'all' ? 'white' : '#6b7280',
+                color: statusFilter === 'all' ? 'var(--text-1)' : 'var(--text-4)',
               }}
             >
               الكل
@@ -111,7 +111,7 @@ export default function GeneratorsPage() {
                 style={{
                   fontFamily: 'var(--font-ibm-arabic)',
                   background: statusFilter === s ? STATUS_BG[s] : 'transparent',
-                  color: statusFilter === s ? STATUS_COLOR[s] : '#6b7280',
+                  color: statusFilter === s ? STATUS_COLOR[s] : 'var(--text-4)',
                 }}
               >
                 {STATUS_LABEL[s]}
@@ -130,7 +130,7 @@ export default function GeneratorsPage() {
                 {['الرقم', 'الحي', 'الحالة', 'القدرة (KW)', 'ساعات التشغيل', 'الإجراءات'].map((h) => (
                   <th
                     key={h}
-                    className="text-start px-4 py-3 text-xs text-gray-500 font-medium whitespace-nowrap"
+                    className="text-start px-4 py-3 text-xs text-[var(--text-4)] font-medium whitespace-nowrap"
                     style={{ fontFamily: 'var(--font-ibm-arabic)' }}
                   >
                     {h}
@@ -148,11 +148,11 @@ export default function GeneratorsPage() {
                   className="border-b border-white/[0.03] hover:bg-white/[0.03] transition-colors"
                 >
                   <td className="px-4 py-2.5">
-                    <span className="font-mono text-sm text-gray-300">
+                    <span className="font-mono text-sm text-[var(--text-2)]">
                       G-{String(gen.id).padStart(4, '0')}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-gray-400" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                  <td className="px-4 py-2.5 text-[var(--text-3)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
                     {gen.area}
                   </td>
                   <td className="px-4 py-2.5">
@@ -167,13 +167,13 @@ export default function GeneratorsPage() {
                       {STATUS_LABEL[gen.status]}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 font-mono text-gray-400">{gen.power}</td>
-                  <td className="px-4 py-2.5 text-gray-500">
+                  <td className="px-4 py-2.5 font-mono text-[var(--text-3)]">{gen.power}</td>
+                  <td className="px-4 py-2.5 text-[var(--text-4)]">
                     {gen.hours.toLocaleString()}
                   </td>
                   <td className="px-4 py-2.5">
                     <button
-                      className="px-2.5 py-1 rounded-lg text-xs transition-colors text-gray-500 hover:text-white hover:bg-white/10"
+                      className="px-2.5 py-1 rounded-lg text-xs transition-colors text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-hover)]"
                       style={{ fontFamily: 'var(--font-ibm-arabic)' }}
                     >
                       عرض
@@ -187,14 +187,14 @@ export default function GeneratorsPage() {
 
         {/* Pagination */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.05]">
-          <span className="text-xs text-gray-600" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+          <span className="text-xs text-[var(--text-5)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
             عرض {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} من {filtered.length}
           </span>
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               style={{ fontFamily: 'var(--font-ibm-arabic)' }}
             >
               السابق
@@ -208,7 +208,7 @@ export default function GeneratorsPage() {
                   className="w-8 h-8 rounded-lg text-xs transition-colors"
                   style={{
                     background: p === page ? 'rgba(16,185,129,0.15)' : 'transparent',
-                    color: p === page ? '#10b981' : '#6b7280',
+                    color: p === page ? '#10b981' : 'var(--text-4)',
                     border: p === page ? '1px solid rgba(16,185,129,0.3)' : '1px solid transparent',
                   }}
                 >
@@ -219,7 +219,7 @@ export default function GeneratorsPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg text-xs text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               style={{ fontFamily: 'var(--font-ibm-arabic)' }}
             >
               التالي
