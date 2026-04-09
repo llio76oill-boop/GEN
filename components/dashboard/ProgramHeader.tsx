@@ -1,26 +1,19 @@
 'use client';
 
-import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, MapPin, Users, Building2, AlertTriangle } from 'lucide-react';
-import { GENERATORS, RAMADI_AREAS } from '@/data/generators';
-import { OWNERS } from '@/data/owners';
+import { Zap, Users, Building2, AlertTriangle } from 'lucide-react';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 export default function ProgramHeader() {
-  const stats = useMemo(() => {
-    const totalOps = OWNERS.reduce(
-      (s, o) => s + o.generators.reduce((ss, g) => ss + g.operators.length, 0), 0
-    );
-    const faults = GENERATORS.filter((g) => g.status === 'fault' || g.status === 'offline').length;
-    const online = GENERATORS.filter((g) => g.status === 'online-grid' || g.status === 'online-gen').length;
-    return { totalOps, faults, online };
-  }, []);
+  const { stats, loading } = useDashboardStats();
+
+  const online = stats.onlineGridCount + stats.onlineGenCount;
 
   const badges = [
-    { icon: Zap,             label: 'مولد مسجل',       value: GENERATORS.length, color: '#10b981' },
-    { icon: Building2,       label: 'قضاء / ناحية',    value: RAMADI_AREAS.length, color: '#3b82f6' },
-    { icon: Users,           label: 'مشغل مسجل',       value: stats.totalOps, color: '#a855f7' },
-    { icon: AlertTriangle,   label: 'عطل نشط',         value: stats.faults, color: '#f97316' },
+    { icon: Zap,           label: 'مولد مسجل',    value: stats.totalGenerators, color: '#10b981' },
+    { icon: Building2,     label: 'قضاء / ناحية', value: stats.totalAreas,      color: '#3b82f6' },
+    { icon: Users,         label: 'مشغل مسجل',    value: stats.totalOperators,  color: '#a855f7' },
+    { icon: AlertTriangle, label: 'عطل نشط',      value: stats.faultCount,      color: '#f97316' },
   ];
 
   return (
@@ -61,7 +54,7 @@ export default function ProgramHeader() {
             className="text-[11px] font-medium"
             style={{ color: '#10b981', fontFamily: 'var(--font-ibm-arabic)' }}
           >
-            {stats.online} متصل الآن
+            {loading ? '…' : online.toLocaleString()} متصل الآن
           </span>
         </div>
       </div>
@@ -90,7 +83,7 @@ export default function ProgramHeader() {
               </div>
               <div>
                 <p className="text-lg font-bold leading-none" style={{ color: b.color }}>
-                  {b.value.toLocaleString('ar-EG')}
+                  {loading ? '—' : b.value.toLocaleString()}
                 </p>
                 <p
                   className="text-[10px] mt-0.5"

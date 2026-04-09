@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Zap, Clock, AlertTriangle, Activity, Cpu } from 'lucide-react';
+import { TrendingUp, Zap, Clock, AlertTriangle, Activity, Cpu } from 'lucide-react';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 /* ?? Animated counter ?? */
 function Counter({ to, duration = 1.4 }: { to: number; duration?: number }) {
@@ -94,6 +95,17 @@ const GRID_24H  = [200,180,160,140,130,120,145,178,215,255,285,305,315,308,298,2
 const FAULT_24H = [28,32,25,38,42,35,40,44,41,47,44,50,47,47,45,50,48,52,47,49,51,47,47,47];
 
 export default function KPIGrid() {
+  const { stats } = useDashboardStats();
+
+  const totalOnline  = stats.onlineGridCount + stats.onlineGenCount;
+  const totalOffline = stats.faultCount + stats.offlineCount;
+  const total        = stats.totalGenerators;
+  const onlinePct    = total > 0 ? (totalOnline / total * 100).toFixed(1) + '%' : '0%';
+  const offlinePct   = total > 0 ? (totalOffline / total * 100).toFixed(1) + '%' : '0%';
+  const onlinePowerMW  = Math.round(stats.onlinePowerKW / 1000 * 10) / 10;
+  const consumedMW     = Math.round(onlinePowerMW * 0.74 * 10) / 10;
+  const loadPct        = onlinePowerMW > 0 ? onlinePowerMW / (onlinePowerMW * 1.35) : 0; // 74% consumption ratio
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
 
@@ -109,7 +121,7 @@ export default function KPIGrid() {
           </span>
         </div>
         <div className="text-3xl font-bold text-[var(--text-1)] mb-0.5">
-          <Counter to={1847} />
+          <Counter to={onlinePowerMW} />
           <span className="text-sm text-[var(--text-4)] font-normal ms-1">MW</span>
         </div>
         <div className="flex items-center gap-1 text-emerald-500 dark:text-emerald-400 text-xs mb-2"
@@ -122,7 +134,7 @@ export default function KPIGrid() {
         <div className="mb-2">
           <div className="flex justify-between text-[10px] mb-1" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
             <span style={{ color: 'var(--text-4)' }}>المستهلكة</span>
-            <span className="font-bold" style={{ color: '#f59e0b' }}>1,367 MW</span>
+            <span className="font-bold" style={{ color: '#f59e0b' }}>{consumedMW} MW</span>
           </div>
           <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
             <motion.div
@@ -133,7 +145,7 @@ export default function KPIGrid() {
             />
           </div>
           <p className="text-[9px] mt-1" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
-            ٧٤% نسبة الاستهلاك من الإنتاج
+            74% نسبة الاستهلاك من الإنتاج
           </p>
         </div>
 
@@ -152,8 +164,8 @@ export default function KPIGrid() {
           </span>
         </div>
         {[
-          { label: 'متصل',    to: 2741, pct: '91.4%', color: 'bg-emerald-500 dark:bg-emerald-400', w: '91.4%', textColor: 'text-emerald-600 dark:text-emerald-400' },
-          { label: 'غير متصل', to: 259, pct: '8.6%',  color: 'bg-red-500 dark:bg-red-400',    w: '8.6%',  textColor: 'text-red-500 dark:text-red-400'     },
+          { label: 'متصل',    to: totalOnline,  pct: onlinePct,  color: 'bg-emerald-500 dark:bg-emerald-400', w: onlinePct,  textColor: 'text-emerald-600 dark:text-emerald-400' },
+          { label: 'غير متصل', to: totalOffline, pct: offlinePct, color: 'bg-red-500 dark:bg-red-400',    w: offlinePct, textColor: 'text-red-500 dark:text-red-400'     },
         ].map((row) => (
           <div key={row.label} className="mb-2 last:mb-0">
             <div className="flex justify-between text-xs mb-1"
@@ -173,7 +185,7 @@ export default function KPIGrid() {
         ))}
         <p className="text-[10px] text-[var(--text-4)] mt-2"
            style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-          من إجمالي 3,000 مولد
+          من إجمالي {stats.totalGenerators.toLocaleString()} مولد
         </p>
       </motion.div>
 
@@ -188,10 +200,10 @@ export default function KPIGrid() {
             حمل الشبكة
           </span>
         </div>
-        <Gauge pct={0.74} color="#10b981" />
+        <Gauge pct={loadPct || 0.74} color="#10b981" />
         <p className="text-center text-[10px] text-[var(--text-4)] -mt-1"
            style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-          1847 / 2500 MW
+          {onlinePowerMW || '—'} / {Math.round((onlinePowerMW || 2500) * 1.35)} MW
         </p>
       </motion.div>
 
@@ -207,8 +219,8 @@ export default function KPIGrid() {
           </span>
         </div>
         {[
-          { dot: 'bg-emerald-500 dark:bg-emerald-400', label: 'شبكة وطنية', h: 14 },
-          { dot: 'bg-blue-500 dark:bg-blue-400',   label: 'مولدات محلية', h: 10 },
+          { dot: 'bg-emerald-500 dark:bg-emerald-400', label: 'شبكة وطنية', h: stats.onlineGridCount },
+          { dot: 'bg-blue-500 dark:bg-blue-400',   label: 'مولدات محلية', h: stats.onlineGenCount },
         ].map((row) => (
           <div key={row.label} className="mb-2.5 last:mb-0">
             <div className="flex items-center gap-2 text-xs mb-0.5"
@@ -238,12 +250,12 @@ export default function KPIGrid() {
           </span>
         </div>
         <div className="text-4xl font-bold text-orange-500 dark:text-orange-400 mb-0.5">
-          <Counter to={47} />
+          <Counter to={stats.faultCount} />
         </div>
         <div className="flex items-center gap-1 text-red-500 dark:text-red-400 text-xs mb-3"
              style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-          <TrendingDown className="w-3 h-3" />
-          <span>7 أعطال جديدة اليوم</span>
+          <AlertTriangle className="w-3 h-3" />
+          <span>{stats.faultCount > 0 ? `${stats.faultCount} عطل نشط` : 'لا أعطال نشطة'}</span>
         </div>
         <div className="h-10"><Sparkline data={FAULT_24H} color="#f97316" /></div>
       </motion.div>

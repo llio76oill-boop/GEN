@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Key, Eye, EyeOff, Copy, Check, RefreshCw, Shield, Clock, User } from 'lucide-react';
@@ -6,9 +6,9 @@ import { Key, Eye, EyeOff, Copy, Check, RefreshCw, Shield, Clock, User } from 'l
 interface ApiKey { id: string; label: string; value: string; created: string; lastUsed: string; }
 
 const API_KEYS: ApiKey[] = [
-  { id: 'system', label: 'مفتاح النظام الرئيسي', value: 'sk-spgms-prod-8f4a2c91d7e3b506af2a1d4c8e7f3b06',   created: '١ يناير ٢٠٢٦',   lastUsed: 'منذ دقيقتين' },
-  { id: 'ws',     label: 'مفتاح Supabase Realtime', value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.spgms', created: '١٥ مارس ٢٠٢٦', lastUsed: 'منذ 5 ثوان' },
-  { id: 'hook',   label: 'سر Webhook',               value: 'whsec_9a3f71c2e84d6b05a123e456f789abcd',          created: '١٠ أبريل ٢٠٢٦', lastUsed: 'منذ يومين' },
+  { id: 'system', label: 'مفتاح النظام الرئيسي', value: 'sk-spgms-prod-8f4a2c91d7e3b506af2a1d4c8e7f3b06',   created: '1 يناير 2026',   lastUsed: 'منذ دقيقتين' },
+  { id: 'ws',     label: 'مفتاح Supabase Realtime', value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.spgms', created: '15 مارس 2026', lastUsed: 'منذ 5 ثوان' },
+  { id: 'hook',   label: 'سر Webhook',               value: 'whsec_9a3f71c2e84d6b05a123e456f789abcd',          created: '10 أبريل 2026', lastUsed: 'منذ يومين' },
 ];
 
 const SESSIONS = [

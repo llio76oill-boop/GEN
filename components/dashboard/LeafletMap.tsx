@@ -1,9 +1,10 @@
 'use client';
 
 import { MapContainer, TileLayer, CircleMarker, Popup, ZoomControl } from 'react-leaflet';
-import { GENERATORS, STATUS_COLOR, STATUS_LABEL } from '@/data/generators';
+import { useGenerators, STATUS_COLOR, STATUS_LABEL } from '@/hooks/useGenerators';
 
 export default function LeafletMap() {
+  const { generators } = useGenerators();
   return (
     <MapContainer
       center={[33.4258, 43.2994]}
@@ -20,7 +21,7 @@ export default function LeafletMap() {
       />
       <ZoomControl position="bottomright" />
 
-      {GENERATORS.map((gen) => (
+      {generators.map((gen) => (
         <CircleMarker
           key={gen.id}
           center={[gen.lat, gen.lng]}

@@ -46,19 +46,6 @@ interface PendingGenerator {
   pending_operators: PendingOperator[];
 }
 
-/* ── Mock maintenance logs ── */
-const MOCK_LOGS = [
-  { id: 1, type: 'صيانة دورية', description: 'تغيير زيت المحرك وفلتر الهواء', date: '2025-01-15', generator: 'GEN-0042' },
-  { id: 2, type: 'إصلاح عطل', description: 'إصلاح مشكلة في منظم الجهد', date: '2025-01-10', generator: 'GEN-0107' },
-  { id: 3, type: 'فحص', description: 'فحص شامل لمنظومة التبريد', date: '2025-01-05', generator: 'GEN-0042' },
-];
-
-/* ── Mock official decrees ── */
-const MOCK_DECREES = [
-  { id: 1, title: 'تحديث التسعيرة الرسمية للأمبير', date: '2025-01-20', body: 'بناءً على قرار مجلس المحافظة رقم 47 لسنة 2025، تم تثبيت سعر الأمبير بواقع 38 دينار/ساعة.' },
-  { id: 2, title: 'ضوابط تشغيل المولدات خلال الصيف', date: '2025-01-01', body: 'يتوجب على جميع أصحاب المولدات الالتزام بساعات التشغيل المحددة من قبل الإدارة.' },
-];
-
 function StatusBadge({ status }: { status: string }) {
   const cfg = {
     pending:  { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24', label: 'قيد المراجعة', icon: Clock },
@@ -197,8 +184,8 @@ export default function OwnersDashboardPage() {
 
   const TABS = [
     { id: 'requests' as const,    label: 'طلباتي',    icon: Clock,    count: requests.length },
-    { id: 'maintenance' as const, label: 'سجل الصيانة', icon: Wrench,  count: MOCK_LOGS.length },
-    { id: 'decrees' as const,     label: 'القرارات الرسمية', icon: FileText, count: MOCK_DECREES.length },
+    { id: 'maintenance' as const, label: 'سجل الصيانة', icon: Wrench,  count: 0 },
+    { id: 'decrees' as const,     label: 'القرارات الرسمية', icon: FileText, count: 0 },
   ];
 
   return (
@@ -319,23 +306,12 @@ export default function OwnersDashboardPage() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-3"
               >
-                {MOCK_LOGS.map((log) => (
-                  <div key={log.id} className="glass-card p-5">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)' }}
-                      >
-                        <Wrench className="w-5 h-5 text-amber-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>{log.type}</p>
-                        <p className="text-xs" style={{ color: 'var(--text-5)' }}>{log.generator} — {log.date}</p>
-                      </div>
-                    </div>
-                    <p className="text-xs" style={{ color: 'var(--text-3)' }}>{log.description}</p>
-                  </div>
-                ))}
+                <div className="glass-card p-10 text-center">
+                  <Wrench className="w-10 h-10 mx-auto text-amber-400 mb-3 opacity-40" />
+                  <p className="text-sm" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                    لا توجد سجلات صيانة بعد
+                  </p>
+                </div>
               </motion.div>
             )}
 
@@ -348,23 +324,12 @@ export default function OwnersDashboardPage() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-3"
               >
-                {MOCK_DECREES.map((decree) => (
-                  <div key={decree.id} className="glass-card p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}
-                      >
-                        <FileText className="w-5 h-5 text-blue-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>{decree.title}</p>
-                        <p className="text-xs" style={{ color: 'var(--text-5)' }}>{decree.date}</p>
-                      </div>
-                    </div>
-                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-3)' }}>{decree.body}</p>
-                  </div>
-                ))}
+                <div className="glass-card p-10 text-center">
+                  <FileText className="w-10 h-10 mx-auto text-blue-400 mb-3 opacity-40" />
+                  <p className="text-sm" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                    لا توجد قرارات رسمية بعد
+                  </p>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

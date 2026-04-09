@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Map, BarChart3, Zap, Settings,
-  FileText, Bell, ShieldCheck, Activity, Users, Globe, Cpu,
+  FileText, Bell, ShieldCheck, Activity, Users, Globe, Cpu, Gauge,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -17,6 +17,7 @@ const NAV = [
   { icon: Zap,             label: 'المولدات',          href: '/dashboard/generators',       badge: null,  external: false },
   { icon: Users,           label: 'أصحاب المولدات',   href: '/dashboard/owners',            badge: null,  external: false },
   { icon: Cpu,             label: 'ThingsBoard IoT',  href: '/dashboard/thingsboard',       badge: 'LIVE', external: false },
+  { icon: Gauge,           label: 'ThingSpeak',        href: '/dashboard/thingspeak',        badge: 'LIVE', external: false },
   { icon: Bell,            label: 'الإشعارات',         href: '/dashboard/notifications',    badge: 12,    external: false },
   { icon: ShieldCheck,     label: 'الأمان والوصول',   href: '/dashboard/security',          badge: null,  external: false },
   { icon: FileText,        label: 'التوثيق والسجلات', href: '/dashboard/docs',              badge: null,  external: false },
@@ -107,16 +108,15 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
                   >
                     {item.label}
                   </span>
-                  {item.badge && (
-                    item.badge === 'LIVE' ? (
-                      <span className="text-[10px] rounded-full px-2 leading-5 font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                        ●
-                      </span>
-                    ) : (
-                      <span className="text-[10px] bg-red-500/80 text-white rounded-full px-1.5 leading-5 min-w-[20px] text-center">
-                        {item.badge}
-                      </span>
-                    )
+                  {item.badge === 'LIVE' && (
+                    <span className="text-[10px] rounded-full px-2 leading-5 font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      ●
+                    </span>
+                  )}
+                  {item.badge && item.badge !== 'LIVE' && (
+                    <span className="text-[10px] bg-red-500/80 text-white rounded-full px-1.5 leading-5 min-w-[20px] text-center">
+                      {item.badge}
+                    </span>
                   )}
                 </motion.div>
               </motion.div>

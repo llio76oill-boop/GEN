@@ -1,14 +1,12 @@
-'use client';
+﻿'use client';
 
-import { useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Clock, Zap, MapPin, AlertTriangle, Activity,
-  Users, Building2, ArrowLeft, TrendingUp, TrendingDown,
+  Users, ArrowLeft,
 } from 'lucide-react';
-import { GENERATORS, RAMADI_AREAS } from '@/data/generators';
-import { OWNERS } from '@/data/owners';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 /* ── Tiny arc gauge ── */
 function MiniGauge({ pct, color, size = 48 }: { pct: number; color: string; size?: number }) {
@@ -37,34 +35,13 @@ function MiniGauge({ pct, color, size = 48 }: { pct: number; color: string; size
 }
 
 export default function ProgramOutputs() {
-  const stats = useMemo(() => {
-    const totalGens = GENERATORS.length;
-    const areas = RAMADI_AREAS.length;
-    const faultGens = GENERATORS.filter((g) => g.status === 'fault' || g.status === 'offline');
-    const onlineGens = GENERATORS.filter((g) => g.status === 'online-grid' || g.status === 'online-gen');
-    const gridGens = GENERATORS.filter((g) => g.status === 'online-grid');
+  const { stats } = useDashboardStats();
 
-    const totalOperators = OWNERS.reduce(
-      (s, o) => s + o.generators.reduce((ss, g) => ss + g.operators.length, 0), 0
-    );
-    const avgGenHours = Math.round(GENERATORS.reduce((s, g) => s + g.hours, 0) / totalGens);
-    const totalPowerMW = Math.round(onlineGens.reduce((s, g) => s + g.power, 0) / 1000 * 10) / 10;
-    const consumedPct = 0.74;
-    const consumedMW = Math.round(totalPowerMW * consumedPct * 10) / 10;
-
-    return {
-      totalGens,
-      areas,
-      faultCount: faultGens.length,
-      onlineCount: onlineGens.length,
-      gridCount: gridGens.length,
-      totalOperators,
-      avgGenHours,
-      totalPowerMW,
-      consumedMW,
-      consumedPct,
-    };
-  }, []);
+  const totalPowerMW  = Math.round(stats.totalPowerKW  / 1000 * 10) / 10;
+  const onlinePowerMW = Math.round(stats.onlinePowerKW / 1000 * 10) / 10;
+  const consumedMW    = Math.round(onlinePowerMW * 0.74 * 10) / 10;
+  const consumedPct   = onlinePowerMW > 0 ? 0.74 : 0;
+  const faultCount    = stats.faultCount + stats.offlineCount;
 
   const outputs = [
     {
@@ -72,31 +49,31 @@ export default function ProgramOutputs() {
       icon: Clock,
       title: 'ساعات تشغيل المولدات',
       description: 'متوسط ساعات التشغيل لكافة المولدات المسجلة',
-      value: stats.avgGenHours.toLocaleString('ar-EG'),
+      value: stats.avgHours.toLocaleString(),
       unit: 'ساعة',
-      sub: `إجمالي ${stats.totalGens} مولد مسجل`,
+      sub: `إجمالي ${stats.totalGenerators} مولد مسجل`,
       color: '#3b82f6',
       href: '/dashboard/generators/',
     },
     {
-      id: 'grid-hours',
-      icon: Zap,
-      title: 'ساعات الكهرباء الوطنية',
-      description: 'عدد ساعات التجهيز من الشبكة الوطنية اليوم',
-      value: '١٤',
-      unit: 'ساعة / يوم',
-      sub: `${stats.gridCount} مولد على الشبكة الوطنية`,
-      color: '#10b981',
-      href: '/dashboard/analytics/',
+      id: 'operators',
+      icon: Users,
+      title: 'المشغلون المسجلون',
+      description: 'إجمالي المشغلين المسجلين في المنظومة',
+      value: stats.totalOperators.toLocaleString(),
+      unit: 'مشغل',
+      sub: `موزعون على ${stats.totalGenerators} مولد`,
+      color: '#a855f7',
+      href: '/dashboard/owners/',
     },
     {
       id: 'geo',
       icon: MapPin,
       title: 'الموقع الجغرافي',
       description: 'مواقع المولدات على الخريطة التفاعلية',
-      value: stats.areas.toString(),
+      value: stats.totalAreas.toString(),
       unit: 'حي / منطقة',
-      sub: `${stats.totalGens} موقع مرسوم على الخريطة`,
+      sub: `${stats.totalGenerators} موقع مرسوم على الخريطة`,
       color: '#a855f7',
       href: '/dashboard/map/',
     },
@@ -105,7 +82,7 @@ export default function ProgramOutputs() {
       icon: AlertTriangle,
       title: 'الأعطال المباشرة',
       description: 'المولدات المتعطلة وغير المتصلة حالياً',
-      value: stats.faultCount.toString(),
+      value: faultCount.toString(),
       unit: 'عطل نشط',
       sub: 'مراقبة فورية على مدار الساعة',
       color: '#f97316',
@@ -116,12 +93,12 @@ export default function ProgramOutputs() {
       icon: Activity,
       title: 'الطاقة المنتجة والمستهلكة',
       description: 'إجمالي الإنتاج مقابل الاستهلاك',
-      value: `${stats.totalPowerMW}`,
+      value: `${onlinePowerMW || totalPowerMW}`,
       unit: 'MW منتجة',
-      sub: `${stats.consumedMW} MW مستهلكة (${Math.round(stats.consumedPct * 100)}%)`,
+      sub: `${consumedMW} MW مستهلكة (${Math.round(consumedPct * 100)}%)`,
       color: '#10b981',
       href: '/dashboard/analytics/',
-      gauge: stats.consumedPct,
+      gauge: consumedPct,
     },
   ];
 
@@ -137,7 +114,7 @@ export default function ProgramOutputs() {
           مخرجات البرنامج
         </h2>
         <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
-          ٥ مخرجات رئيسية
+          5 مخرجات رئيسية
         </span>
       </div>
 

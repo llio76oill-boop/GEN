@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WifiOff, Thermometer, Zap, AlertTriangle, RefreshCw, Phone, CheckCircle2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 type Severity = 'critical' | 'warning' | 'info';
 
@@ -22,48 +23,41 @@ const SEV: Record<Severity, { bg: string; border: string; text: string; badge: s
   info:     { bg: 'rgba(59,130,246,0.07)',  border: 'rgba(59,130,246,0.22)',  text: '#3b82f6', badge: 'معلومة' },
 };
 
-const SEED_FAULTS: Fault[] = [
-  { id: 1, gId: 'G-0482', location: 'الرمادي - الأندلس',    type: 'انقطاع الاتصال',    severity: 'critical', timeLabel: 'منذ 2 د',  Icon: WifiOff       },
-  { id: 2, gId: 'G-1204', location: 'الرمادي - المعارف',    type: 'إفراط في الحرارة',  severity: 'critical', timeLabel: 'منذ 5 د',  Icon: Thermometer   },
-  { id: 3, gId: 'G-2891', location: 'الرمادي - التميم',     type: 'تذبذب في الجهد',    severity: 'warning',  timeLabel: 'منذ 12 د', Icon: Zap           },
-  { id: 4, gId: 'G-0071', location: 'الرمادي - الكرامة',    type: 'انقطاع الاتصال',    severity: 'warning',  timeLabel: 'منذ 18 د', Icon: WifiOff       },
-  { id: 5, gId: 'G-1563', location: 'الرمادي - النهضة',     type: 'صيانة مجدولة',      severity: 'info',     timeLabel: 'منذ 25 د', Icon: RefreshCw     },
-  { id: 6, gId: 'G-0930', location: 'الرمادي - الحوز',      type: 'انخفاض الوقود',     severity: 'warning',  timeLabel: 'منذ 31 د', Icon: AlertTriangle },
-  { id: 7, gId: 'G-2240', location: 'الرمادي - الجزيرة',    type: 'تذبذب في الجهد',    severity: 'warning',  timeLabel: 'منذ 45 د', Icon: Zap           },
-];
+const ICON_MAP: Record<string, React.ElementType> = {
+  WifiOff,
+  Thermometer,
+  Zap,
+  AlertTriangle,
+  RefreshCw,
+};
 
-const TYPES     = ['انقطاع الاتصال', 'إفراط في الحرارة', 'تذبذب في الجهد', 'صيانة مجدولة', 'عطل في الحساس'];
-const RAMADI_ZONES = [
-  'المركز', 'الأندلس', 'المعارف', 'التميم', 'الحوز',
-  'الجزيرة', 'الكرامة', 'الضباط', 'البو فراج', 'النهضة',
-  'المرور', 'الصناعية', 'الوريج', 'البوعيثة', 'المنصور',
-];
-const SEV_KEYS: Severity[] = ['critical', 'warning', 'info'];
-const ICONS     = [WifiOff, Thermometer, Zap, AlertTriangle];
+function rowToFault(row: Record<string, unknown>): Fault {
+  return {
+    id:        row.id as number,
+    gId:       row.g_id as string,
+    location:  row.location as string,
+    type:      row.type as string,
+    severity:  row.severity as Severity,
+    timeLabel: row.time_label as string,
+    Icon:      ICON_MAP[row.icon as string] ?? AlertTriangle,
+  };
+}
 
 export default function FaultFeed() {
-  const [faults, setFaults] = useState<Fault[]>(SEED_FAULTS);
-  const [freshIds, setFreshIds] = useState<number[]>([]);
+  const [faults, setFaults] = useState<Fault[]>([]);
+  const [loading, setLoading] = useState(true);
   const [resolved, setResolved] = useState<Set<number>>(new Set());
 
-  /* Simulate a new live fault every 5 s */
   useEffect(() => {
-    const iv = setInterval(() => {
-      const newId = Date.now();
-      const newFault: Fault = {
-        id: newId,
-        gId: `G-${String(Math.floor(Math.random() * 3000) + 1).padStart(4, '0')}`,
-        location: `الرمادي - ${RAMADI_ZONES[Math.floor(Math.random() * RAMADI_ZONES.length)]}`,
-        type: TYPES[Math.floor(Math.random() * TYPES.length)],
-        severity: SEV_KEYS[Math.floor(Math.random() * SEV_KEYS.length)],
-        timeLabel: 'الآن',
-        Icon: ICONS[Math.floor(Math.random() * ICONS.length)],
-      };
-      setFaults((prev) => [newFault, ...prev.slice(0, 24)]);
-      setFreshIds((prev) => [...prev, newId]);
-      setTimeout(() => setFreshIds((prev) => prev.filter((x) => x !== newId)), 3200);
-    }, 5000);
-    return () => clearInterval(iv);
+    supabase
+      .from('faults')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(25)
+      .then(({ data }) => {
+        setFaults((data ?? []).map(rowToFault));
+        setLoading(false);
+      });
   }, []);
 
   const handleResolve = (id: number) => {
@@ -97,11 +91,23 @@ export default function FaultFeed() {
 
       {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto p-2.5 space-y-2">
+        {loading && (
+          <div className="flex items-center justify-center h-full py-12">
+            <div className="w-6 h-6 rounded-full border-2 border-[var(--text-4)] border-t-transparent animate-spin" />
+          </div>
+        )}
+        {!loading && faults.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full py-12 gap-3">
+            <CheckCircle2 className="w-10 h-10 text-emerald-500 dark:text-emerald-400" />
+            <p className="text-sm text-[var(--text-4)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+              لا توجد أعطال نشطة
+            </p>
+          </div>
+        )}
         <AnimatePresence initial={false}>
           {faults.map((fault) => {
             const s      = SEV[fault.severity];
             const Icon   = fault.Icon;
-            const isFresh    = freshIds.includes(fault.id);
             const isResolved = resolved.has(fault.id);
 
             return (
@@ -115,8 +121,7 @@ export default function FaultFeed() {
                 className="rounded-xl p-3 overflow-hidden"
                 style={{
                   background: s.bg,
-                  border: `1px solid ${isFresh ? s.text + '55' : s.border}`,
-                  boxShadow: isFresh ? `0 0 16px ${s.text}22` : 'none',
+                  border: `1px solid ${s.border}`,
                 }}
               >
                 {/* Top row */}
@@ -139,16 +144,6 @@ export default function FaultFeed() {
                       >
                         {s.badge}
                       </span>
-                      {isFresh && (
-                        <motion.span
-                          initial={{ scale: 0.8 }}
-                          animate={{ scale: 1 }}
-                          className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/80 text-white"
-                          style={{ fontFamily: 'var(--font-ibm-arabic)' }}
-                        >
-                          جديد
-                        </motion.span>
-                      )}
                     </div>
                     <p
                       className="text-[11px] text-[var(--text-3)] truncate"

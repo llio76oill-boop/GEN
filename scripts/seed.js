@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Seed script: pushes all mock data to Supabase
  * Run: node scripts/seed.js
  */
@@ -31,6 +31,7 @@ const RAMADI_AREAS = [
   { name: 'الوريج',    lat: 33.4600, lng: 43.2850 },
   { name: 'البوعيثة', lat: 33.3950, lng: 43.2900 },
   { name: 'المنصور',   lat: 33.4100, lng: 43.2650 },
+  { name: 'التأميم',   lat: 33.4177, lng: 43.2678 },
 ];
 
 const WEIGHTS = [
@@ -61,7 +62,7 @@ function buildGenerators() {
 // ---------- Owners + Generators + Operators ----------
 const OWNERS_DATA = [
   {
-    name: 'أحمد محمد السامرائي', phone: '+964 790 123 4567', initials: 'أم', owned_since: 'مارس ٢٠٢٣',
+    name: 'أحمد محمد السامرائي', phone: '+964 790 123 4567', initials: 'أم', owned_since: 'مارس 2023',
     generators: [
       { code: 'G-0042', area: 'المركز', power: 380, status: 'online-grid', total_hours: 6240, operators: [
         { name: 'كريم فهد حسن',     phone: '+964 770 111 0001', shift: 'صباحي', shift_start: '06:00', shift_end: '14:00', active: true  },
@@ -75,7 +76,7 @@ const OWNERS_DATA = [
     ],
   },
   {
-    name: 'علي حسين الجبوري', phone: '+964 781 234 5678', initials: 'عح', owned_since: 'يونيو ٢٠٢٢',
+    name: 'علي حسين الجبوري', phone: '+964 781 234 5678', initials: 'عح', owned_since: 'يونيو 2022',
     generators: [
       { code: 'G-0156', area: 'الكرامة', power: 450, status: 'online-grid', total_hours: 7100, operators: [
         { name: 'حيدر عبد الله رضا', phone: '+964 790 333 0006', shift: 'صباحي', shift_start: '06:00', shift_end: '14:00', active: true  },
@@ -85,7 +86,7 @@ const OWNERS_DATA = [
     ],
   },
   {
-    name: 'محمد عبد الرحمن الدليمي', phone: '+964 772 345 6789', initials: 'مع', owned_since: 'يناير ٢٠٢٤',
+    name: 'محمد عبد الرحمن الدليمي', phone: '+964 772 345 6789', initials: 'مع', owned_since: 'يناير 2024',
     generators: [
       { code: 'G-0213', area: 'النهضة', power: 175, status: 'fault', total_hours: 2100, operators: [
         { name: 'طارق نزار فيصل',   phone: '+964 790 444 0009', shift: 'صباحي', shift_start: '07:00', shift_end: '15:00', active: true  },
@@ -101,7 +102,7 @@ const OWNERS_DATA = [
     ],
   },
   {
-    name: 'خالد إبراهيم الفهداوي', phone: '+964 783 456 7890', initials: 'خإ', owned_since: 'سبتمبر ٢٠٢٣',
+    name: 'خالد إبراهيم الفهداوي', phone: '+964 783 456 7890', initials: 'خإ', owned_since: 'سبتمبر 2023',
     generators: [
       { code: 'G-0078', area: 'الجزيرة', power: 500, status: 'online-grid', total_hours: 7800, operators: [
         { name: 'عبد الكريم منصور',  phone: '+964 770 555 0014', shift: 'صباحي', shift_start: '06:00', shift_end: '14:00', active: true  },
@@ -115,7 +116,7 @@ const OWNERS_DATA = [
     ],
   },
   {
-    name: 'سعد عمر البو فرجي', phone: '+964 784 567 8901', initials: 'سع', owned_since: 'فبراير ٢٠٢٤',
+    name: 'سعد عمر البو فرجي', phone: '+964 784 567 8901', initials: 'سع', owned_since: 'فبراير 2024',
     generators: [
       { code: 'G-0192', area: 'البو فرج', power: 155, status: 'online-gen', total_hours: 3400, operators: [
         { name: 'نبيل جاسم حمود',   phone: '+964 790 666 0019', shift: 'صباحي', shift_start: '07:00', shift_end: '15:00', active: true  },
@@ -124,7 +125,7 @@ const OWNERS_DATA = [
     ],
   },
   {
-    name: 'يوسف ناصر العبيدي', phone: '+964 785 678 9012', initials: 'ين', owned_since: 'أبريل ٢٠٢٢',
+    name: 'يوسف ناصر العبيدي', phone: '+964 785 678 9012', initials: 'ين', owned_since: 'أبريل 2022',
     generators: [
       { code: 'G-0033', area: 'الوريج', power: 420, status: 'online-grid', total_hours: 7200, operators: [
         { name: 'علاء حسن عباس',     phone: '+964 770 777 0021', shift: 'صباحي', shift_start: '06:00', shift_end: '14:00', active: false },

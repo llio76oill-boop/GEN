@@ -2,36 +2,38 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { Search, Plus, Filter } from 'lucide-react';
-import { GENERATORS, STATUS_LABEL, STATUS_COLOR, STATUS_BG, type GeneratorStatus } from '@/data/generators';
+import { useGenerators, STATUS_LABEL, STATUS_COLOR, STATUS_BG, type GeneratorStatus } from '@/hooks/useGenerators';
 
 const PAGE_SIZE = 20;
 const ALL_STATUSES: GeneratorStatus[] = ['online-grid', 'online-gen', 'fault', 'offline'];
 
 export default function GeneratorsPage() {
-  const [search, setSearch]           = useState('');
+  const { generators, loading } = useGenerators();
+  const [search, setSearch]             = useState('');
   const [statusFilter, setStatusFilter] = useState<GeneratorStatus | 'all'>('all');
-  const [page, setPage]               = useState(1);
+  const [page, setPage]                 = useState(1);
 
   const filtered = useMemo(() => {
-    let items = GENERATORS;
+    let items = generators;
     if (statusFilter !== 'all') items = items.filter((g) => g.status === statusFilter);
     if (search) {
       const q = search.trim();
       items = items.filter((g) => String(g.id).includes(q) || g.area.includes(q));
     }
     return items;
-  }, [search, statusFilter]);
+  }, [generators, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const counts = {
-    all:    GENERATORS.length,
-    grid:   GENERATORS.filter((g) => g.status === 'online-grid').length,
-    gen:    GENERATORS.filter((g) => g.status === 'online-gen').length,
-    fault:  GENERATORS.filter((g) => g.status === 'fault').length,
-    offline:GENERATORS.filter((g) => g.status === 'offline').length,
+    all:     generators.length,
+    grid:    generators.filter((g) => g.status === 'online-grid').length,
+    gen:     generators.filter((g) => g.status === 'online-gen').length,
+    fault:   generators.filter((g) => g.status === 'fault').length,
+    offline: generators.filter((g) => g.status === 'offline').length,
   };
 
   const handleFilterChange = (v: GeneratorStatus | 'all') => {
@@ -48,7 +50,7 @@ export default function GeneratorsPage() {
             قائمة المولدات
           </h1>
           <p className="text-sm text-[var(--text-4)] mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-            الرمادي — محافظة الأنبار • {GENERATORS.length} مولد مسجل
+            الرمادي — محافظة الأنبار • {generators.length} مولد مسجل
           </p>
         </div>
         <button
@@ -123,6 +125,17 @@ export default function GeneratorsPage() {
 
       {/* Table */}
       <div className="glass-card overflow-hidden">
+        {loading && (
+          <div className="flex items-center justify-center py-16">
+            <div className="w-6 h-6 rounded-full border-2 border-[var(--text-4)] border-t-transparent animate-spin" />
+          </div>
+        )}
+        {!loading && paged.length === 0 && (
+          <p className="text-center text-[var(--text-4)] py-16 text-sm" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+            لا توجد مولدات تطابق البحث
+          </p>
+        )}
+        {!loading && paged.length > 0 && (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -172,18 +185,20 @@ export default function GeneratorsPage() {
                     {gen.hours.toLocaleString()}
                   </td>
                   <td className="px-4 py-2.5">
-                    <button
-                      className="px-2.5 py-1 rounded-lg text-xs transition-colors text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-[var(--surface-hover)]"
+                    <Link
+                      href={`/dashboard/generators/G-${String(gen.id).padStart(4, '0')}`}
+                      className="px-2.5 py-1 rounded-lg text-xs transition-colors text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-white/[0.06] inline-block"
                       style={{ fontFamily: 'var(--font-ibm-arabic)' }}
                     >
-                      عرض
-                    </button>
+                      عرض الملف
+                    </Link>
                   </td>
                 </motion.tr>
               ))}
             </tbody>
           </table>
         </div>
+        )}
 
         {/* Pagination */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.05]">

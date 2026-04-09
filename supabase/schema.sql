@@ -28,15 +28,20 @@ CREATE TABLE IF NOT EXISTS owners (
 
 -- 3) Owned generators (linked to owners)
 CREATE TABLE IF NOT EXISTS owned_generators (
-  id          SERIAL PRIMARY KEY,
-  owner_id    INTEGER NOT NULL REFERENCES owners(id) ON DELETE CASCADE,
-  code        TEXT NOT NULL,
-  area        TEXT NOT NULL,
-  power       DOUBLE PRECISION NOT NULL,
-  status      TEXT NOT NULL CHECK (status IN ('online-grid','online-gen','fault','offline')),
-  total_hours INTEGER NOT NULL DEFAULT 0,
-  is_mock     BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+  id                    SERIAL PRIMARY KEY,
+  owner_id              INTEGER NOT NULL REFERENCES owners(id) ON DELETE CASCADE,
+  code                  TEXT NOT NULL,
+  area                  TEXT NOT NULL,
+  power                 DOUBLE PRECISION NOT NULL,
+  status                TEXT NOT NULL CHECK (status IN ('online-grid','online-gen','fault','offline')),
+  total_hours           INTEGER NOT NULL DEFAULT 0,
+  license_number        TEXT,
+  address               TEXT,
+  monthly_fuel_quota    INTEGER DEFAULT 0,
+  thingspeak_channel_id TEXT,
+  thingspeak_read_key   TEXT,
+  is_mock               BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- 4) Operators (linked to owned_generators)
@@ -95,35 +100,47 @@ ALTER TABLE faults ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE areas ENABLE ROW LEVEL SECURITY;
 
--- Policies: allow all reads for anon, all operations for service_role
-CREATE POLICY "Allow all reads" ON generators FOR SELECT USING (true);
-CREATE POLICY "Allow all reads" ON owners FOR SELECT USING (true);
+-- Policies: drop first so this script is safe to re-run
+DO $$ DECLARE
+  tbls TEXT[] := ARRAY['generators','owners','owned_generators','operators','faults','notifications','areas'];
+  t    TEXT;
+BEGIN
+  FOREACH t IN ARRAY tbls LOOP
+    EXECUTE format('DROP POLICY IF EXISTS "Allow all reads"       ON %I', t);
+    EXECUTE format('DROP POLICY IF EXISTS "Allow service inserts" ON %I', t);
+    EXECUTE format('DROP POLICY IF EXISTS "Allow service deletes" ON %I', t);
+    EXECUTE format('DROP POLICY IF EXISTS "Allow service updates" ON %I', t);
+  END LOOP;
+END $$;
+
+CREATE POLICY "Allow all reads" ON generators       FOR SELECT USING (true);
+CREATE POLICY "Allow all reads" ON owners           FOR SELECT USING (true);
 CREATE POLICY "Allow all reads" ON owned_generators FOR SELECT USING (true);
-CREATE POLICY "Allow all reads" ON operators FOR SELECT USING (true);
-CREATE POLICY "Allow all reads" ON faults FOR SELECT USING (true);
-CREATE POLICY "Allow all reads" ON notifications FOR SELECT USING (true);
-CREATE POLICY "Allow all reads" ON areas FOR SELECT USING (true);
+CREATE POLICY "Allow all reads" ON operators        FOR SELECT USING (true);
+CREATE POLICY "Allow all reads" ON faults           FOR SELECT USING (true);
+CREATE POLICY "Allow all reads" ON notifications    FOR SELECT USING (true);
+CREATE POLICY "Allow all reads" ON areas            FOR SELECT USING (true);
 
-CREATE POLICY "Allow service inserts" ON generators FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow service inserts" ON owners FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow service inserts" ON generators       FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow service inserts" ON owners           FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow service inserts" ON owned_generators FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow service inserts" ON operators FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow service inserts" ON faults FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow service inserts" ON notifications FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow service inserts" ON areas FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow service inserts" ON operators        FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow service inserts" ON faults           FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow service inserts" ON notifications    FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow service inserts" ON areas            FOR INSERT WITH CHECK (true);
 
-CREATE POLICY "Allow service deletes" ON generators FOR DELETE USING (true);
-CREATE POLICY "Allow service deletes" ON owners FOR DELETE USING (true);
+CREATE POLICY "Allow service deletes" ON generators       FOR DELETE USING (true);
+CREATE POLICY "Allow service deletes" ON owners           FOR DELETE USING (true);
 CREATE POLICY "Allow service deletes" ON owned_generators FOR DELETE USING (true);
-CREATE POLICY "Allow service deletes" ON operators FOR DELETE USING (true);
-CREATE POLICY "Allow service deletes" ON faults FOR DELETE USING (true);
-CREATE POLICY "Allow service deletes" ON notifications FOR DELETE USING (true);
-CREATE POLICY "Allow service deletes" ON areas FOR DELETE USING (true);
+CREATE POLICY "Allow service deletes" ON operators        FOR DELETE USING (true);
+CREATE POLICY "Allow service deletes" ON faults           FOR DELETE USING (true);
+CREATE POLICY "Allow service deletes" ON notifications    FOR DELETE USING (true);
+CREATE POLICY "Allow service deletes" ON areas            FOR DELETE USING (true);
 
-CREATE POLICY "Allow service updates" ON generators FOR UPDATE USING (true) WITH CHECK (true);
-CREATE POLICY "Allow service updates" ON owners FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow service updates" ON generators       FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow service updates" ON owners           FOR UPDATE USING (true) WITH CHECK (true);
 CREATE POLICY "Allow service updates" ON owned_generators FOR UPDATE USING (true) WITH CHECK (true);
-CREATE POLICY "Allow service updates" ON operators FOR UPDATE USING (true) WITH CHECK (true);
-CREATE POLICY "Allow service updates" ON faults FOR UPDATE USING (true) WITH CHECK (true);
-CREATE POLICY "Allow service updates" ON notifications FOR UPDATE USING (true) WITH CHECK (true);
-CREATE POLICY "Allow service updates" ON areas FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow service updates" ON operators        FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow service updates" ON faults           FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow service updates" ON notifications    FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow service updates" ON areas            FOR UPDATE USING (true) WITH CHECK (true);

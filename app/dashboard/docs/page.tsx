@@ -1,4 +1,4 @@
-import { Zap, WrenchIcon, Gauge, LayoutDashboard } from 'lucide-react';
+﻿import { Zap, WrenchIcon, Gauge, LayoutDashboard } from 'lucide-react';
 
 interface Entry {
   version: string;
@@ -9,7 +9,7 @@ interface Entry {
 
 const CHANGELOG: Entry[] = [
   {
-    version: 'v2.0.27', date: 'مايو ٢٠٢٦',
+    version: 'v2.0.27', date: 'مايو 2026',
     title: 'التحديث الكامل للوحة التحكم',
     items: [
       { type: 'feature', text: 'خريطة تفاعلية حقيقية مع موقع مدينة الرمادي — الأنبار' },
@@ -19,7 +19,7 @@ const CHANGELOG: Entry[] = [
     ],
   },
   {
-    version: 'v2.0.26', date: 'أبريل ٢٠٢٦',
+    version: 'v2.0.26', date: 'أبريل 2026',
     title: 'تكامل Leaflet للخرائط التفاعلية',
     items: [
       { type: 'feature', text: 'استخدام react-leaflet مع خرائط CartoDB Dark Matter' },
@@ -28,7 +28,7 @@ const CHANGELOG: Entry[] = [
     ],
   },
   {
-    version: 'v2.0.25', date: 'مارس ٢٠٢٦',
+    version: 'v2.0.25', date: 'مارس 2026',
     title: 'نظام اكتشاف الأعطال الفوري',
     items: [
       { type: 'feature', text: 'واجهة إدارة الأعطال مع أولويات وأنواع العطل' },
@@ -37,7 +37,7 @@ const CHANGELOG: Entry[] = [
     ],
   },
   {
-    version: 'v2.0.24', date: 'فبراير ٢٠٢٦',
+    version: 'v2.0.24', date: 'فبراير 2026',
     title: 'دعم RTL والعربية الكاملة',
     items: [
       { type: 'feature', text: 'دعم كامل للغة العربية وخط IBM Plex Sans Arabic' },
@@ -46,7 +46,7 @@ const CHANGELOG: Entry[] = [
     ],
   },
   {
-    version: 'v2.0.23', date: 'يناير ٢٠٢٦',
+    version: 'v2.0.23', date: 'يناير 2026',
     title: 'نظام KPI المتحرك',
     items: [
       { type: 'feature', text: 'مؤشرات KPI مع Bento Grid وانيميشن Framer Motion' },
@@ -55,7 +55,7 @@ const CHANGELOG: Entry[] = [
     ],
   },
   {
-    version: 'v2.0.22', date: 'ديسمبر ٢٠٢٥',
+    version: 'v2.0.22', date: 'ديسمبر 2025',
     title: 'الإطلاق الأولي للنظام',
     items: [
       { type: 'feature', text: 'صفحة هبوط مع خلفية SVG متحركة وبوابات glassmorphism' },

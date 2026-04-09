@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { Signal } from 'lucide-react';
-import { GENERATORS } from '@/data/generators';
+import { useGenerators } from '@/hooks/useGenerators';
 
 const LeafletMap = dynamic(() => import('@/components/dashboard/LeafletMap'), {
   ssr: false,
@@ -24,9 +24,10 @@ const STAT_CONFIG = [
 ];
 
 export default function MapPage() {
+  const { generators } = useGenerators();
   const stats = STAT_CONFIG.map((s) => ({
     ...s,
-    value: GENERATORS.filter((g) => g.status === s.key).length,
+    value: generators.filter((g) => g.status === s.key).length,
   }));
 
   return (

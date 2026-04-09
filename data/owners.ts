@@ -1,4 +1,4 @@
-import { GeneratorStatus } from './generators';
+﻿import { GeneratorStatus } from './generators';
 
 export interface Operator {
   id: number;
@@ -34,7 +34,7 @@ export const OWNERS: Owner[] = [
     name: 'أحمد محمد السامرائي',
     phone: '+964 790 123 4567',
     initials: 'أم',
-    ownedSince: 'مارس ٢٠٢٣',
+    ownedSince: 'مارس 2023',
     generators: [
       {
         code: 'G-0042', area: 'المركز', power: 380, status: 'online-grid', totalHours: 6240,
@@ -58,7 +58,7 @@ export const OWNERS: Owner[] = [
     name: 'علي حسين الجبوري',
     phone: '+964 781 234 5678',
     initials: 'عح',
-    ownedSince: 'يونيو ٢٠٢٢',
+    ownedSince: 'يونيو 2022',
     generators: [
       {
         code: 'G-0156', area: 'الكرامة', power: 450, status: 'online-grid', totalHours: 7100,
@@ -75,7 +75,7 @@ export const OWNERS: Owner[] = [
     name: 'محمد عبد الرحمن الدليمي',
     phone: '+964 772 345 6789',
     initials: 'مع',
-    ownedSince: 'يناير ٢٠٢٤',
+    ownedSince: 'يناير 2024',
     generators: [
       {
         code: 'G-0213', area: 'النهضة', power: 175, status: 'fault', totalHours: 2100,
@@ -104,7 +104,7 @@ export const OWNERS: Owner[] = [
     name: 'خالد إبراهيم الفهداوي',
     phone: '+964 783 456 7890',
     initials: 'خإ',
-    ownedSince: 'سبتمبر ٢٠٢٣',
+    ownedSince: 'سبتمبر 2023',
     generators: [
       {
         code: 'G-0078', area: 'الجزيرة', power: 500, status: 'online-grid', totalHours: 7800,
@@ -128,7 +128,7 @@ export const OWNERS: Owner[] = [
     name: 'سعد عمر البو فرجي',
     phone: '+964 784 567 8901',
     initials: 'سع',
-    ownedSince: 'فبراير ٢٠٢٤',
+    ownedSince: 'فبراير 2024',
     generators: [
       {
         code: 'G-0192', area: 'البو فرج', power: 155, status: 'online-gen', totalHours: 3400,
@@ -144,7 +144,7 @@ export const OWNERS: Owner[] = [
     name: 'يوسف ناصر العبيدي',
     phone: '+964 785 678 9012',
     initials: 'ين',
-    ownedSince: 'أبريل ٢٠٢٢',
+    ownedSince: 'أبريل 2022',
     generators: [
       {
         code: 'G-0033', area: 'الوريج', power: 420, status: 'online-grid', totalHours: 7200,

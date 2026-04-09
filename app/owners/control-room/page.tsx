@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,7 +19,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSessionTimer, RATE_PER_HOUR } from '@/hooks/useSessionTimer';
-import { OWNERS } from '@/data/owners';
+import { supabase } from '@/lib/supabase';
 
 /* ── Formatting helpers ── */
 function formatTime(totalSeconds: number): { h: string; m: string; s: string } {
@@ -119,9 +119,30 @@ export default function ControlRoomPage() {
   const router = useRouter();
   const { toggle, isDark } = useTheme();
 
-  // Use first owner's first generator as default
-  const owner = OWNERS[0];
-  const gen = owner.generators[0];
+  // Fetch first registered generator from Supabase
+  const [genCode, setGenCode] = useState('');
+  const [ownerName, setOwnerName] = useState('');
+  const [genArea, setGenArea] = useState('');
+  const [genPower, setGenPower] = useState(380);
+  const [loadingOwner, setLoadingOwner] = useState(true);
+
+  useEffect(() => {
+    supabase
+      .from('owned_generators')
+      .select('code, area, power, owners(name)')
+      .limit(1)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setGenCode(data.code ?? '');
+          setGenArea(data.area ?? '');
+          setGenPower(data.power ?? 380);
+          const owner = Array.isArray(data.owners) ? data.owners[0] : data.owners;
+          setOwnerName((owner as { name?: string })?.name ?? '');
+        }
+        setLoadingOwner(false);
+      });
+  }, []);
 
   const {
     isRunning,
@@ -130,7 +151,7 @@ export default function ControlRoomPage() {
     startSession,
     stopSession,
     error,
-  } = useSessionTimer(gen.code, owner.name, gen.area);
+  } = useSessionTimer(genCode, ownerName, genArea);
 
   const time = formatTime(elapsedSeconds);
 
@@ -245,11 +266,11 @@ export default function ControlRoomPage() {
           style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)' }}
         >
           <Zap className="w-3.5 h-3.5" />
-          {gen.code}
+          {loadingOwner ? '...' : genCode}
         </div>
-        <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-3)' }}>{gen.area}</span>
-        <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-4)' }}>{gen.power} KW</span>
-        <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-5)' }}>{owner.name}</span>
+        <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-3)' }}>{loadingOwner ? '' : genArea}</span>
+        <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-4)' }}>{loadingOwner ? '' : `${genPower} KW`}</span>
+        <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-5)' }}>{loadingOwner ? '' : ownerName}</span>
       </div>
 
       {/* ── Main Content ── */}
@@ -410,7 +431,7 @@ export default function ControlRoomPage() {
                 </div>
                 <div>
                   <p className="text-xs font-medium" style={{ color: 'var(--text-4)' }}>التكلفة اللحظية</p>
-                  <p className="text-[10px]" style={{ color: 'var(--text-5)' }}>التسعيرة: ٣٨ دينار/أمبير/ساعة</p>
+                  <p className="text-[10px]" style={{ color: 'var(--text-5)' }}>التسعيرة: 38 دينار/أمبير/ساعة</p>
                 </div>
               </div>
               <div className="flex items-baseline gap-2">
@@ -460,7 +481,7 @@ export default function ControlRoomPage() {
               {isRunning && (
                 <div className="text-center">
                   <p className="text-[10px]" style={{ color: 'var(--text-5)' }}>
-                    {Math.round(estimatedLoad * gen.power / 100)} / {gen.power} KW
+                    {Math.round(estimatedLoad * genPower / 100)} / {genPower} KW
                   </p>
                 </div>
               )}
@@ -535,7 +556,7 @@ export default function ControlRoomPage() {
                   },
                   {
                     label: 'الطاقة المُقدَّرة',
-                    value: isRunning ? `${((estimatedLoad / 100) * gen.power * elapsedSeconds / 3600).toFixed(1)}` : '0',
+                    value: isRunning ? `${((estimatedLoad / 100) * genPower * elapsedSeconds / 3600).toFixed(1)}` : '0',
                     unit: 'KWh',
                     color: '#3b82f6',
                   },

@@ -1,50 +1,66 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, WifiOff, Thermometer, Zap, Search, RefreshCw, Phone, CheckCircle2, ChevronDown } from 'lucide-react';
-import { GENERATORS, STATUS_COLOR, getFaultType } from '@/data/generators';
+import { AlertTriangle, WifiOff, Thermometer, Zap, Search, RefreshCw, Phone, CheckCircle2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 type FilterKey = 'all' | 'critical' | 'warning' | 'info';
+type Severity  = 'critical' | 'warning' | 'info';
 
-const ICONS = [WifiOff, Thermometer, Zap, AlertTriangle, RefreshCw];
-const PRIORITY_BY_POWER = (p: number) => p > 300 ? 'critical' : p > 150 ? 'warning' : 'info';
+interface Fault {
+  id: number;
+  g_id: string;
+  location: string;
+  type: string;
+  severity: Severity;
+  time_label: string;
+  icon: string;
+}
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  WifiOff, Thermometer, Zap, AlertTriangle, RefreshCw,
+};
 
 const PRIORITY_CFG = {
   critical: { label: 'حرج',    bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.25)',   text: '#ef4444' },
-  warning:  { label: 'تحذير',  bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.25)', text: '#f97316' },
+  warning:  { label: 'تحذير',  bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.25)',  text: '#f97316' },
   info:     { label: 'عادي',   bg: 'rgba(59,130,246,0.1)',  border: 'rgba(59,130,246,0.25)',  text: '#3b82f6' },
 };
 
 export default function FaultsPage() {
-  const [filter, setFilter] = useState<FilterKey>('all');
-  const [search, setSearch] = useState('');
+  const [faults, setFaults]     = useState<Fault[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [filter, setFilter]     = useState<FilterKey>('all');
+  const [search, setSearch]     = useState('');
   const [resolved, setResolved] = useState<Set<number>>(new Set());
 
-  const faults = useMemo(() =>
-    GENERATORS
-      .filter((g) => g.status === 'fault' || g.status === 'offline')
-      .map((g) => ({
-        ...g,
-        faultType: getFaultType(g.id),
-        priority: PRIORITY_BY_POWER(g.power),
-        Icon: ICONS[g.id % ICONS.length],
-      })),
-    []
-  );
+  useEffect(() => {
+    supabase
+      .from('faults')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setFaults((data ?? []) as Fault[]);
+        setLoading(false);
+      });
+  }, []);
 
-  const filtered = faults.filter((f) => {
-    if (resolved.has(f.id)) return false;
-    if (filter !== 'all' && f.priority !== filter) return false;
-    if (search && !f.area.includes(search) && !String(f.id).includes(search)) return false;
-    return true;
-  });
+  const filtered = useMemo(() =>
+    faults.filter((f) => {
+      if (resolved.has(f.id)) return false;
+      if (filter !== 'all' && f.severity !== filter) return false;
+      if (search && !f.location.includes(search) && !f.g_id.includes(search)) return false;
+      return true;
+    }),
+    [faults, filter, search, resolved]
+  );
 
   const counts = {
     all:      faults.filter((f) => !resolved.has(f.id)).length,
-    critical: faults.filter((f) => !resolved.has(f.id) && f.priority === 'critical').length,
-    warning:  faults.filter((f) => !resolved.has(f.id) && f.priority === 'warning').length,
-    info:     faults.filter((f) => !resolved.has(f.id) && f.priority === 'info').length,
+    critical: faults.filter((f) => !resolved.has(f.id) && f.severity === 'critical').length,
+    warning:  faults.filter((f) => !resolved.has(f.id) && f.severity === 'warning').length,
+    info:     faults.filter((f) => !resolved.has(f.id) && f.severity === 'info').length,
   };
 
   return (
@@ -118,7 +134,7 @@ export default function FaultsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.05]">
-                {['رقم المولد', 'الحي', 'نوع العطل', 'الأولوية', 'القدرة KW', 'الإجراءات'].map((h) => (
+                {['رقم المولد', 'الموقع', 'نوع العطل', 'الأولوية', 'الوقت', 'الإجراءات'].map((h) => (
                   <th
                     key={h}
                     className="text-start px-4 py-3 text-xs text-[var(--text-4)] font-medium whitespace-nowrap"
@@ -130,9 +146,18 @@ export default function FaultsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.slice(0, 40).map((f, idx) => {
-                const cfg = PRIORITY_CFG[f.priority as keyof typeof PRIORITY_CFG];
-                const Icon = f.Icon;
+              {loading && (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-5 h-5 rounded-full border-2 border-[var(--text-4)] border-t-transparent animate-spin" />
+                    </div>
+                  </td>
+                </tr>
+              )}
+              {!loading && filtered.slice(0, 40).map((f, idx) => {
+                const cfg  = PRIORITY_CFG[f.severity];
+                const Icon = ICON_MAP[f.icon] ?? AlertTriangle;
                 return (
                   <motion.tr
                     key={f.id}
@@ -143,44 +168,34 @@ export default function FaultsPage() {
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div
-                          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{ background: `${STATUS_COLOR[f.status]}18` }}
-                        >
-                          <Icon className="w-3.5 h-3.5" style={{ color: STATUS_COLOR[f.status] }} />
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                             style={{ background: `${cfg.text}18` }}>
+                          <Icon className="w-3.5 h-3.5" style={{ color: cfg.text }} />
                         </div>
-                        <span className="font-mono text-[var(--text-1)] font-medium">
-                          G-{String(f.id).padStart(4, '0')}
-                        </span>
+                        <span className="font-mono text-[var(--text-1)] font-medium">{f.g_id}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-[var(--text-3)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-                      {f.area}
+                      {f.location}
                     </td>
                     <td className="px-4 py-3 text-[var(--text-3)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-                      {f.faultType}
+                      {f.type}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className="px-2 py-0.5 rounded-full text-xs font-medium"
-                        style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.text, fontFamily: 'var(--font-ibm-arabic)' }}
-                      >
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium"
+                            style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.text, fontFamily: 'var(--font-ibm-arabic)' }}>
                         {cfg.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-[var(--text-3)] font-mono">{f.power}</td>
+                    <td className="px-4 py-3 text-[var(--text-4)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                      {f.time_label}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
-                        <button
-                          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors text-[var(--text-5)] hover:text-[var(--text-1)]"
-                          title="تشخيص"
-                        >
+                        <button className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors text-[var(--text-5)] hover:text-[var(--text-1)]" title="تشخيص">
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                          className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors text-[var(--text-5)] hover:text-[var(--text-1)]"
-                          title="تواصل"
-                        >
+                        <button className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors text-[var(--text-5)] hover:text-[var(--text-1)]" title="تواصل">
                           <Phone className="w-3.5 h-3.5" />
                         </button>
                         <button
