@@ -8,7 +8,7 @@ import {
   RefreshCw, ArrowUpRight, Info, ServerCrash, Radio,
   Activity, BarChart3, Clock, Layers, Settings2,
   Eye, EyeOff, Save, RotateCcw, Copy, Check, FlaskConical,
-  Shield, Globe, SlidersHorizontal, BellRing,
+  Shield, Globe, SlidersHorizontal, BellRing, Gauge,
 } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -19,6 +19,18 @@ interface LiveRow {
   current_load: number;
   voltage: number;
   last_seen: string;
+}
+
+// ThingSpeak-sourced generator (bridges ThingSpeak → ThingsBoard view)
+interface TsGen {
+  code:     string;
+  area:     string;
+  channel:  string;
+  readKey:  string;
+  voltage:  number | null;
+  status:   'online' | 'offline' | 'fault';
+  lastSeen: string | null;
+  loading:  boolean;
 }
 
 type HealthStatus = 'checking' | 'ok' | 'degraded' | 'error';
@@ -36,6 +48,11 @@ function statusColor(s: LiveRow['status']) {
 }
 function statusLabel(s: LiveRow['status']) {
   return s === 'online' ? 'متصل' : s === 'fault' ? 'عطل' : 'منقطع';
+}
+function voltageToStatus(v: number): TsGen['status'] {
+  if (v < 170 || v > 270) return 'fault';
+  if (v === 0) return 'offline';
+  return 'online';
 }
 
 // ─── Animated number ────────────────────────────────────────────────────────
@@ -651,6 +668,10 @@ export default function ThingsBoardPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [activeTab, setActiveTab]   = useState<'telemetry' | 'architecture' | 'guide' | 'settings'>('telemetry');
 
+  // ── ThingSpeak bridge state ───────────────────────────────────────────────
+  const [tsGens, setTsGens]         = useState<TsGen[]>([]);
+  const [tsLoading, setTsLoading]   = useState(false);
+
   // mock load-history per generator (last 10 readings)
   const [sparkData] = useState<Record<string, number[]>>(() => ({}));
 
@@ -673,6 +694,56 @@ export default function ThingsBoardPage() {
     }
   }, []);
 
+  // ── Fetch ThingSpeak generators from owned_generators table ──────────────
+  const fetchTsGens = useCallback(async () => {
+    setTsLoading(true);
+    try {
+      const { data: gens } = await supabase
+        .from('owned_generators')
+        .select('code, area, thingspeak_channel_id, thingspeak_read_key')
+        .not('thingspeak_channel_id', 'is', null);
+
+      if (!gens || gens.length === 0) { setTsLoading(false); return; }
+
+      const results = await Promise.all(
+        gens.map(async (g) => {
+          try {
+            const url = `https://api.thingspeak.com/channels/${g.thingspeak_channel_id}/fields/1.json?api_key=${g.thingspeak_read_key}&results=1`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const json = await res.json();
+            const feed = json.feeds?.[0];
+            const v = feed?.field1 ? parseFloat(feed.field1) : null;
+            return {
+              code:     g.code,
+              area:     g.area,
+              channel:  g.thingspeak_channel_id,
+              readKey:  g.thingspeak_read_key,
+              voltage:  v,
+              status:   v !== null ? voltageToStatus(v) : 'offline' as const,
+              lastSeen: feed?.created_at ?? null,
+              loading:  false,
+            } satisfies TsGen;
+          } catch {
+            return {
+              code:     g.code,
+              area:     g.area,
+              channel:  g.thingspeak_channel_id,
+              readKey:  g.thingspeak_read_key,
+              voltage:  null,
+              status:   'offline' as const,
+              lastSeen: null,
+              loading:  false,
+            } satisfies TsGen;
+          }
+        })
+      );
+      setTsGens(results);
+    } catch { /* silent */ } finally {
+      setTsLoading(false);
+    }
+  }, []);
+
   useEffect(() => { fetchRows(); }, [fetchRows]);
 
   useEffect(() => {
@@ -680,6 +751,14 @@ export default function ThingsBoardPage() {
     const id = setInterval(fetchRows, 8000);
     return () => clearInterval(id);
   }, [autoRefresh, fetchRows]);
+
+  // Fetch ThingSpeak generators on mount + every 15s
+  useEffect(() => { fetchTsGens(); }, [fetchTsGens]);
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(fetchTsGens, 15_000);
+    return () => clearInterval(id);
+  }, [autoRefresh, fetchTsGens]);
 
   // derived stats
   const total   = rows.length;
@@ -849,6 +928,108 @@ export default function ThingsBoardPage() {
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}
             className="space-y-4">
+
+            {/* ── ThingSpeak Bridge Section ──────────────────────────── */}
+            {(tsGens.length > 0 || tsLoading) && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-card overflow-hidden"
+                style={{ border: '1px solid rgba(168,85,247,0.2)' }}
+              >
+                <div className="px-5 py-3 flex items-center justify-between border-b"
+                     style={{ borderColor: 'rgba(168,85,247,0.15)', background: 'rgba(168,85,247,0.06)' }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+                         style={{ background: 'rgba(168,85,247,0.2)', border: '1px solid rgba(168,85,247,0.3)' }}>
+                      <Gauge className="w-4 h-4" style={{ color: '#a855f7' }} />
+                    </div>
+                    <span className="text-sm font-semibold" style={{ color: '#a855f7', fontFamily: 'var(--font-ibm-arabic)' }}>
+                      ThingSpeak — مولدات مُوَصَّلة
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full"
+                          style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }}>
+                      {tsGens.length} قناة
+                    </span>
+                  </div>
+                  <button onClick={fetchTsGens} disabled={tsLoading}
+                          className="p-1.5 rounded-lg transition-all"
+                          style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)', color: '#a855f7' }}>
+                    <RefreshCw className={`w-3.5 h-3.5 ${tsLoading ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+
+                {tsLoading && tsGens.length === 0 ? (
+                  <div className="px-5 py-6 flex items-center gap-3 text-sm"
+                       style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                    <RefreshCw className="w-4 h-4 animate-spin" style={{ color: '#a855f7' }} />
+                    جارٍ جلب بيانات ThingSpeak…
+                  </div>
+                ) : (
+                  <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                    {tsGens.map((g) => {
+                      const sc = g.status === 'online' ? '#10b981' : g.status === 'fault' ? '#f59e0b' : '#6b7280';
+                      const sl = g.status === 'online' ? 'متصل' : g.status === 'fault' ? 'عطل' : 'منقطع';
+                      const vLabel = g.voltage === null ? '—'
+                        : g.voltage < 180 ? 'منخفض جداً'
+                        : g.voltage < 210 ? 'منخفض'
+                        : g.voltage <= 240 ? 'طبيعي'
+                        : g.voltage <= 260 ? 'مرتفع'
+                        : 'مرتفع جداً';
+                      const vColor = g.voltage === null ? 'var(--text-5)'
+                        : g.voltage < 180 || g.voltage > 260 ? '#ef4444'
+                        : g.voltage < 210 ? '#f97316'
+                        : g.voltage <= 240 ? '#10b981'
+                        : '#f59e0b';
+                      return (
+                        <div key={g.code} className="px-5 py-4 flex items-center gap-4 flex-wrap hover:bg-white/[0.015] transition-colors">
+                          {/* Status dot */}
+                          <span className="w-2 h-2 rounded-full flex-shrink-0"
+                                style={{ background: sc, boxShadow: g.status === 'online' ? `0 0 6px ${sc}` : 'none' }} />
+                          {/* Code + Area */}
+                          <div className="min-w-[100px]">
+                            <p className="text-xs font-bold font-mono" style={{ color: 'var(--text-2)' }}>{g.code}</p>
+                            <p className="text-[10px]" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>{g.area}</p>
+                          </div>
+                          {/* Status badge */}
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
+                                style={{ background: `${sc}15`, color: sc, border: `1px solid ${sc}30`, fontFamily: 'var(--font-ibm-arabic)' }}>
+                            {sl}
+                          </span>
+                          {/* Voltage */}
+                          <div className="flex items-baseline gap-1.5 flex-shrink-0">
+                            <span className="text-xl font-bold tabular-nums font-mono" style={{ color: vColor }}>
+                              {g.voltage !== null ? g.voltage.toFixed(2) : '—'}
+                            </span>
+                            <span className="text-xs" style={{ color: 'var(--text-5)' }}>V</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-md ms-1"
+                                  style={{ background: `${vColor}12`, color: vColor, fontFamily: 'var(--font-ibm-arabic)' }}>
+                              {vLabel}
+                            </span>
+                          </div>
+                          {/* Channel link */}
+                          <a href={`https://thingspeak.com/channels/${g.channel}`}
+                             target="_blank" rel="noopener noreferrer"
+                             className="text-[10px] font-mono flex items-center gap-1 ms-auto hover:opacity-80 transition-opacity"
+                             style={{ color: '#a855f7' }}>
+                            <Radio className="w-3 h-3" />
+                            CH {g.channel}
+                          </a>
+                          {/* Last seen */}
+                          {g.lastSeen && (
+                            <span className="text-[10px] flex items-center gap-1 flex-shrink-0"
+                                  style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                              <Clock className="w-3 h-3" />
+                              {new Date(g.lastSeen).toLocaleTimeString('ar-IQ')}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </motion.div>
+            )}
 
             {rows.length === 0 && !loading && (
               <div className="glass-card p-12 flex flex-col items-center gap-4 text-center">
