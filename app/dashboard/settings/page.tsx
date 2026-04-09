@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { CheckCircle, XCircle, Loader2, Copy, Check, Zap, Cpu } from 'lucide-react';
 
-type TabKey = 'general' | 'notifications' | 'display' | 'connection' | 'data';
+type TabKey = 'general' | 'notifications' | 'display' | 'connection' | 'thingsboard' | 'data';
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'general',       label: 'عام'      },
-  { key: 'notifications', label: 'إشعارات'  },
-  { key: 'display',       label: 'واجهة'    },
-  { key: 'connection',    label: 'الاتصال'  },
-  { key: 'data',          label: 'البيانات' },
+  { key: 'general',       label: 'عام'         },
+  { key: 'notifications', label: 'إشعارات'     },
+  { key: 'display',       label: 'واجهة'       },
+  { key: 'connection',    label: 'الاتصال'     },
+  { key: 'thingsboard',   label: 'ThingsBoard' },
+  { key: 'data',          label: 'البيانات'    },
 ];
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
@@ -116,12 +118,63 @@ function DisplayTab() {
 }
 
 function ConnectionTab() {
+  const [testing, setTesting]     = useState(false);
+  const [dbStatus, setDbStatus]   = useState<'idle' | 'ok' | 'error'>('idle');
+  const [dbMsg, setDbMsg]         = useState('');
+
+  const testConnection = async () => {
+    setTesting(true);
+    setDbStatus('idle');
+    try {
+      const { error } = await supabase.from('generators').select('id').limit(1);
+      if (error) throw error;
+      setDbStatus('ok');
+      setDbMsg('اتصال ناجح بقاعدة البيانات');
+    } catch (e: unknown) {
+      setDbStatus('error');
+      setDbMsg(e instanceof Error ? e.message : 'فشل الاتصال');
+    } finally {
+      setTesting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Supabase */}
       <div className="glass-card p-5 space-y-4">
-        <h3 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>إعدادات Supabase</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>إعدادات Supabase</h3>
+          <button
+            onClick={testConnection}
+            disabled={testing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+            style={{
+              background: 'rgba(16,185,129,0.1)',
+              border: '1px solid rgba(16,185,129,0.25)',
+              color: '#10b981',
+              fontFamily: 'var(--font-ibm-arabic)',
+            }}
+          >
+            {testing
+              ? <Loader2 className="w-3 h-3 animate-spin" />
+              : dbStatus === 'ok'
+                ? <CheckCircle className="w-3 h-3" />
+                : dbStatus === 'error'
+                  ? <XCircle className="w-3 h-3 text-red-400" />
+                  : <Zap className="w-3 h-3" />}
+            {testing ? 'جارٍ الاختبار…' : 'اختبار الاتصال'}
+          </button>
+        </div>
+
+        {dbStatus !== 'idle' && (
+          <p className={`text-xs ${dbStatus === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}
+             style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+            {dbStatus === 'ok' ? '✓' : '✗'} {dbMsg}
+          </p>
+        )}
+
         <Field label="Project URL">
-          <TextInput defaultValue="https://your-project.supabase.co" />
+          <TextInput defaultValue={process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://your-project.supabase.co'} />
         </Field>
         <Field label="Anon Key" hint="المفتاح العام — آمن للنشر">
           <TextInput defaultValue="eyJhbGciOiJIUzI1NiIsInR5cCI6Ikp…" />
@@ -130,11 +183,209 @@ function ConnectionTab() {
           <TextInput defaultValue="spgms-live-grid" />
         </Field>
       </div>
+
+      {/* Live Status */}
+      <div className="glass-card p-5 space-y-3">
+        <h3 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>حالة الخدمات</h3>
+        {([
+          { name: 'Supabase Database',    color: '#10b981', dot: 'bg-emerald-400' },
+          { name: 'Supabase Realtime',    color: '#10b981', dot: 'bg-emerald-400' },
+          { name: 'Edge Functions',       color: '#10b981', dot: 'bg-emerald-400' },
+          { name: 'ThingsBoard MQTT',     color: '#f59e0b', dot: 'bg-amber-400'   },
+        ] as const).map((s) => (
+          <div key={s.name} className="flex items-center justify-between py-2 border-b last:border-0"
+               style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+            <span className="text-sm text-gray-300" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{s.name}</span>
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${s.dot} animate-pulse`} />
+              <span className="text-xs" style={{ color: s.color }}>متصل</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Copy button helper ───────────────────────────────────────────────────────
+function CopyField({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <Field label={label} hint={hint}>
+      <div className="flex items-center gap-2">
+        <input
+          readOnly
+          value={value}
+          className="flex-1 rounded-xl px-3 py-2.5 text-sm text-gray-300 outline-none cursor-default"
+          style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            fontFamily: 'monospace',
+          }}
+        />
+        <button
+          onClick={copy}
+          className="flex-shrink-0 p-2.5 rounded-xl transition-all"
+          style={{
+            background: copied ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+            border: `1px solid ${copied ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.08)'}`,
+            color: copied ? '#10b981' : '#6b7280',
+          }}
+          title="نسخ"
+        >
+          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+        </button>
+      </div>
+    </Field>
+  );
+}
+
+function ThingsBoardTab() {
+  const [testing, setTesting]   = useState(false);
+  const [tbStatus, setTbStatus] = useState<'idle' | 'ok' | 'error'>('idle');
+  const [tbMsg, setTbMsg]       = useState('');
+
+  // In a real setup this would come from env / DB
+  const webhookUrl = typeof window !== 'undefined'
+    ? `${window.location.origin.replace(/:\d+$/, '')}/functions/v1/thingsboard-webhook`
+    : 'https://your-project.supabase.co/functions/v1/thingsboard-webhook';
+
+  const testTbConnection = async () => {
+    setTesting(true);
+    setTbStatus('idle');
+    try {
+      // Lightweight check: see if generators_live_status table is accessible
+      const { error } = await supabase.from('generators_live_status').select('generator_code').limit(1);
+      if (error) throw error;
+      setTbStatus('ok');
+      setTbMsg('جدول generators_live_status جاهز لاستقبال البيانات');
+    } catch (e: unknown) {
+      setTbStatus('error');
+      setTbMsg(e instanceof Error ? e.message : 'فشل الاتصال بجدول الحالة الحية');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+
+      {/* Status banner */}
+      <div className="glass-card p-4 flex items-center gap-3"
+           style={{ border: '1px solid rgba(16,185,129,0.2)', background: 'rgba(16,185,129,0.05)' }}>
+        <Cpu className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+        <div>
+          <p className="text-sm font-semibold text-emerald-300" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+            تكامل ThingsBoard مُفعَّل
+          </p>
+          <p className="text-xs text-gray-400 mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+            Edge Function جاهزة لاستقبال بيانات التلغراف من Rule Engine
+          </p>
+        </div>
+      </div>
+
+      {/* Webhook endpoint */}
+      <div className="glass-card p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>Webhook Endpoint</h3>
+          <button
+            onClick={testTbConnection}
+            disabled={testing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+            style={{
+              background: 'rgba(16,185,129,0.1)',
+              border: '1px solid rgba(16,185,129,0.25)',
+              color: '#10b981',
+              fontFamily: 'var(--font-ibm-arabic)',
+            }}
+          >
+            {testing
+              ? <Loader2 className="w-3 h-3 animate-spin" />
+              : tbStatus === 'ok'
+                ? <CheckCircle className="w-3 h-3" />
+                : tbStatus === 'error'
+                  ? <XCircle className="w-3 h-3 text-red-400" />
+                  : <Zap className="w-3 h-3" />}
+            {testing ? 'جارٍ الاختبار…' : 'اختبار الجدول'}
+          </button>
+        </div>
+
+        {tbStatus !== 'idle' && (
+          <p className={`text-xs ${tbStatus === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}
+             style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+            {tbStatus === 'ok' ? '✓' : '✗'} {tbMsg}
+          </p>
+        )}
+
+        <CopyField
+          label="Webhook URL — انسخها في إعدادات ThingsBoard Rule Engine"
+          value={webhookUrl}
+          hint="HTTP POST · Header مطلوب: x-webhook-secret"
+        />
+
+        <div className="rounded-xl p-3 space-y-1.5"
+             style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <p className="text-[11px] font-mono text-amber-400">// Expected payload (JSON)</p>
+          <pre className="text-[11px] font-mono text-gray-400 leading-5">{`{
+  "generator_code": "GEN-RM-0042",
+  "status": "online" | "offline" | "fault",
+  "current_load": 450.5,   // kW
+  "voltage": 380.0         // Volts
+}`}</pre>
+        </div>
+      </div>
+
+      {/* Server settings */}
+      <div className="glass-card p-5 space-y-4">
+        <h3 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>إعدادات خادم ThingsBoard</h3>
+        <Field label="Server URL">
+          <TextInput defaultValue="http://thingsboard.anbar-grid.local:8080" />
+        </Field>
+        <Field label="مفتاح المستخدم (Tenant API Token)" hint="من: Account → Profile → JWT Token">
+          <TextInput defaultValue="Bearer eyJhbGci…" />
+        </Field>
+        <Field label="Device Profile Filter" hint="اترك فارغاً لاستيراد كل الأجهزة">
+          <TextInput defaultValue="SPGMS_Generator" />
+        </Field>
+      </div>
+
+      {/* Secret */}
+      <div className="glass-card p-5 space-y-4">
+        <h3 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>إعداد الأمان</h3>
+        <Field
+          label="WEBHOOK_SECRET"
+          hint="يجب تطابقها مع قيمة المتغير البيئي في Supabase → Edge Functions → Secrets"
+        >
+          <TextInput defaultValue="••••••••••••••••••••••••••••••••" />
+        </Field>
+
+        <div className="rounded-xl p-3 space-y-1"
+             style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}>
+          <p className="text-xs font-semibold text-amber-400" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>⚠ تعليمات الربط في ThingsBoard</p>
+          <ol className="text-[11px] text-gray-400 list-decimal list-inside space-y-0.5 leading-5"
+              style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+            <li>افتح Rule Engine → Rule Chains → Root Rule Chain</li>
+            <li>أضف Node من نوع REST API Call</li>
+            <li>الصق Webhook URL في حقل Endpoint URL</li>
+            <li>أضف Header: <code className="font-mono text-amber-300">x-webhook-secret</code> بقيمة السر أعلاه</li>
+            <li>اربط Node بـ Post telemetry</li>
+          </ol>
+        </div>
+      </div>
+
+      {/* MQTT */}
       <div className="glass-card p-5 space-y-4">
         <h3 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>MQTT Broker</h3>
         <Field label="Broker Host"><TextInput defaultValue="mqtt.anbar-grid.local" /></Field>
         <Field label="Port"><TextInput defaultValue="1883" /></Field>
         <Field label="Topic Prefix"><TextInput defaultValue="spgms/ramadi/+/telemetry" /></Field>
+        <Toggle defaultChecked label="TLS / SSL مُشفَّر" />
+        <Toggle label="Bridge Mode (مرحّل)" />
       </div>
     </div>
   );
@@ -272,6 +523,7 @@ const TAB_CONTENT: Record<TabKey, React.ReactNode> = {
   notifications: <NotificationsTab />,
   display:       <DisplayTab />,
   connection:    <ConnectionTab />,
+  thingsboard:   <ThingsBoardTab />,
   data:          <DataTab />,
 };
 
