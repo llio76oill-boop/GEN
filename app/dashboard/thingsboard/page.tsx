@@ -6,7 +6,9 @@ import { supabase } from '@/lib/supabase';
 import {
   Cpu, Wifi, WifiOff, Zap, AlertTriangle, CheckCircle2,
   RefreshCw, ArrowUpRight, Info, ServerCrash, Radio,
-  Activity, BarChart3, Clock, Layers,
+  Activity, BarChart3, Clock, Layers, Settings2,
+  Eye, EyeOff, Save, RotateCcw, Copy, Check, FlaskConical,
+  Shield, Globe, SlidersHorizontal, BellRing,
 } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -140,6 +142,506 @@ function Spark({ data, color }: { data: number[]; color: string }) {
   );
 }
 
+// ─── Settings persistence key ────────────────────────────────────────────────
+const STORAGE_KEY = 'spgms_tb_settings';
+
+interface TBSettings {
+  serverUrl:       string;
+  tenantToken:     string;
+  deviceProfile:   string;
+  webhookSecret:   string;
+  mqttHost:        string;
+  mqttPort:        string;
+  mqttTopic:       string;
+  mqttTls:         boolean;
+  mqttBridge:      boolean;
+  refreshInterval: string;
+  alertOnFault:    boolean;
+  alertOnOffline:  boolean;
+  alertOnVoltage:  boolean;
+  voltageMin:      string;
+  voltageMax:      string;
+  loadMax:         string;
+}
+
+const DEFAULT_SETTINGS: TBSettings = {
+  serverUrl:       'http://thingsboard.anbar-grid.local:8080',
+  tenantToken:     '',
+  deviceProfile:   'SPGMS_Generator',
+  webhookSecret:   '',
+  mqttHost:        'mqtt.anbar-grid.local',
+  mqttPort:        '1883',
+  mqttTopic:       'spgms/ramadi/+/telemetry',
+  mqttTls:         false,
+  mqttBridge:      false,
+  refreshInterval: '8',
+  alertOnFault:    true,
+  alertOnOffline:  true,
+  alertOnVoltage:  true,
+  voltageMin:      '340',
+  voltageMax:      '420',
+  loadMax:         '900',
+};
+
+function loadSettings(): TBSettings {
+  if (typeof window === 'undefined') return DEFAULT_SETTINGS;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
+  } catch { return DEFAULT_SETTINGS; }
+}
+
+// ─── Reusable UI primitives for settings ────────────────────────────────────
+function SField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-medium" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>{label}</label>
+      {children}
+      {hint && <p className="text-[10px]" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>{hint}</p>}
+    </div>
+  );
+}
+
+function SInput({
+  value, onChange, placeholder, type = 'text',
+}: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="rounded-xl px-3 py-2.5 text-sm outline-none transition-all w-full"
+      style={{
+        background:   'rgba(255,255,255,0.04)',
+        border:       '1px solid rgba(255,255,255,0.08)',
+        color:        'var(--text-2)',
+        fontFamily:   'var(--font-geist-mono), monospace',
+      }}
+      onFocus={(e)  => (e.target.style.borderColor = 'rgba(16,185,129,0.45)')}
+      onBlur={(e)   => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+    />
+  );
+}
+
+function SSecretInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder ?? '••••••••••••••••'}
+        className="rounded-xl px-3 py-2.5 text-sm outline-none transition-all w-full pl-10"
+        style={{
+          background: 'rgba(255,255,255,0.04)',
+          border:     '1px solid rgba(255,255,255,0.08)',
+          color:      'var(--text-2)',
+          fontFamily: 'var(--font-geist-mono), monospace',
+        }}
+        onFocus={(e)  => (e.target.style.borderColor = 'rgba(16,185,129,0.45)')}
+        onBlur={(e)   => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+      />
+      <button
+        type="button"
+        onClick={() => setShow((v) => !v)}
+        className="absolute left-3 top-1/2 -translate-y-1/2 transition-colors"
+        style={{ color: show ? '#10b981' : 'var(--text-5)' }}
+      >
+        {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      </button>
+    </div>
+  );
+}
+
+function SCopyInput({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        readOnly value={value}
+        className="flex-1 rounded-xl px-3 py-2.5 text-xs outline-none cursor-default"
+        style={{
+          background: 'rgba(255,255,255,0.02)',
+          border:     '1px solid rgba(255,255,255,0.06)',
+          color:      'var(--text-5)',
+          fontFamily: 'var(--font-geist-mono), monospace',
+        }}
+      />
+      <button
+        onClick={() => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1800); }}
+        className="flex-shrink-0 p-2.5 rounded-xl transition-all"
+        style={{
+          background:   copied ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
+          border:       `1px solid ${copied ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.08)'}`,
+          color:        copied ? '#10b981' : 'var(--text-5)',
+        }}
+      >
+        {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+      </button>
+    </div>
+  );
+}
+
+function SToggle({ checked, onChange, label, sub }: { checked: boolean; onChange: (v: boolean) => void; label: string; sub?: string }) {
+  return (
+    <div
+      className="flex items-center justify-between py-3 border-b last:border-0 cursor-pointer group"
+      style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+      onClick={() => onChange(!checked)}
+    >
+      <div>
+        <p className="text-sm group-hover:text-white transition-colors"
+           style={{ color: 'var(--text-3)', fontFamily: 'var(--font-ibm-arabic)' }}>{label}</p>
+        {sub && <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>{sub}</p>}
+      </div>
+      <div
+        className="relative w-11 h-6 rounded-full flex-shrink-0 transition-all"
+        style={{ background: checked ? 'rgba(16,185,129,0.8)' : 'rgba(255,255,255,0.1)' }}
+      >
+        <span
+          className="absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-200"
+          style={{ right: checked ? '4px' : 'auto', left: checked ? 'auto' : '4px' }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SSection({ title, icon: Icon, color, children }: {
+  title: string; icon: React.ElementType; color: string; children: React.ReactNode;
+}) {
+  return (
+    <div className="glass-card overflow-hidden">
+      <div className="px-5 py-3.5 flex items-center gap-3 border-b"
+           style={{ borderColor: 'rgba(255,255,255,0.05)', background: `${color}08` }}>
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+             style={{ background: `${color}20`, border: `1px solid ${color}35` }}>
+          <Icon className="w-4 h-4" style={{ color }} />
+        </div>
+        <h3 className="text-sm font-semibold" style={{ color, fontFamily: 'var(--font-ibm-arabic)' }}>{title}</h3>
+      </div>
+      <div className="p-5 space-y-4">{children}</div>
+    </div>
+  );
+}
+
+// ─── Settings Tab Component ──────────────────────────────────────────────────
+function SettingsTab() {
+  const [cfg, setCfg]             = useState<TBSettings>(loadSettings);
+  const [saved, setSaved]         = useState(false);
+  const [testing, setTesting]     = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [dirty, setDirty]         = useState(false);
+
+  const set = <K extends keyof TBSettings>(key: K, val: TBSettings[K]) => {
+    setCfg((prev) => ({ ...prev, [key]: val }));
+    setDirty(true);
+    setTestResult(null);
+  };
+
+  const save = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+    setSaved(true);
+    setDirty(false);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const reset = () => {
+    if (!confirm('هل تريد استعادة الإعدادات الافتراضية؟')) return;
+    setCfg(DEFAULT_SETTINGS);
+    localStorage.removeItem(STORAGE_KEY);
+    setDirty(false);
+    setTestResult(null);
+  };
+
+  const testWebhook = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const { error } = await supabase.from('generators_live_status').select('id').limit(1);
+      if (error) throw error;
+      setTestResult({ ok: true, msg: 'الاتصال بجدول generators_live_status ناجح ✓' });
+    } catch (e: unknown) {
+      setTestResult({ ok: false, msg: e instanceof Error ? e.message : 'فشل الاتصال' });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const webhookUrl = typeof window !== 'undefined'
+    ? `${window.location.origin.replace(/:\d+$/, '')}/functions/v1/thingsboard-webhook`
+    : 'https://YOUR.supabase.co/functions/v1/thingsboard-webhook';
+
+  return (
+    <motion.div
+      key="settings"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-5"
+    >
+      {/* Sticky save bar */}
+      <div
+        className="sticky top-0 z-20 flex items-center justify-between gap-4 rounded-2xl px-5 py-3"
+        style={{
+          background:    'rgba(8,8,16,0.85)',
+          backdropFilter:'blur(16px)',
+          border:        dirty ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className="w-4 h-4" style={{ color: '#10b981' }} />
+          <span className="text-sm font-semibold" style={{ color: 'var(--text-1)', fontFamily: 'var(--font-ibm-arabic)' }}>
+            إعدادات ThingsBoard
+          </span>
+          {dirty && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)', fontFamily: 'var(--font-ibm-arabic)' }}>
+              تعديلات غير محفوظة
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={reset}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border:     '1px solid rgba(255,255,255,0.08)',
+              color:      'var(--text-4)',
+              fontFamily: 'var(--font-ibm-arabic)',
+            }}
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            استعادة الافتراضي
+          </button>
+          <button
+            onClick={save}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            style={{
+              background: saved  ? 'rgba(16,185,129,0.25)' : dirty ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.06)',
+              border:     `1px solid ${saved || dirty ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.08)'}`,
+              color:      saved || dirty ? '#10b981' : 'var(--text-5)',
+              fontFamily: 'var(--font-ibm-arabic)',
+            }}
+          >
+            <Save className="w-3.5 h-3.5" />
+            {saved ? 'تم الحفظ ✓' : 'حفظ الإعدادات'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── 1. Server Connection ──────────────────────────────────── */}
+      <SSection title="اتصال خادم ThingsBoard" icon={Globe} color="#6366f1">
+        <SField label="عنوان الخادم (Server URL)" hint="مثال: http://tb.example.com:8080 أو https://thingsboard.cloud">
+          <SInput value={cfg.serverUrl} onChange={(v) => set('serverUrl', v)} placeholder="http://thingsboard.anbar-grid.local:8080" />
+        </SField>
+        <SField label="Tenant API Token" hint="من: Account → Profile → JWT Token">
+          <SSecretInput value={cfg.tenantToken} onChange={(v) => set('tenantToken', v)} placeholder="Bearer eyJhbGci…" />
+        </SField>
+        <SField label="Device Profile (اسم الـ Profile في TB)">
+          <SInput value={cfg.deviceProfile} onChange={(v) => set('deviceProfile', v)} placeholder="SPGMS_Generator" />
+        </SField>
+      </SSection>
+
+      {/* ── 2. Webhook / Edge Function ───────────────────────────── */}
+      <SSection title="Webhook — Edge Function" icon={ArrowUpRight} color="#10b981">
+        <SField label="رابط الـ Webhook (للنسخ في ThingsBoard Rule Engine)">
+          <SCopyInput value={webhookUrl} />
+        </SField>
+        <SField label="WEBHOOK_SECRET" hint="يجب أن يطابق قيمة المتغير البيئي في Supabase → Edge Functions → Secrets">
+          <SSecretInput value={cfg.webhookSecret} onChange={(v) => set('webhookSecret', v)} />
+        </SField>
+
+        {/* Test connection */}
+        <div className="pt-1">
+          <button
+            onClick={testWebhook}
+            disabled={testing}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-60"
+            style={{
+              background: 'rgba(16,185,129,0.1)',
+              border:     '1px solid rgba(16,185,129,0.25)',
+              color:      '#10b981',
+              fontFamily: 'var(--font-ibm-arabic)',
+            }}
+          >
+            {testing
+              ? <RefreshCw className="w-4 h-4 animate-spin" />
+              : <FlaskConical className="w-4 h-4" />}
+            {testing ? 'جارٍ الاختبار…' : 'اختبار الاتصال بقاعدة البيانات'}
+          </button>
+          {testResult && (
+            <motion.p
+              initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+              className="mt-2 text-xs"
+              style={{
+                color:      testResult.ok ? '#10b981' : '#ef4444',
+                fontFamily: 'var(--font-ibm-arabic)',
+              }}
+            >
+              {testResult.ok ? <CheckCircle2 className="inline w-3.5 h-3.5 me-1" /> : <AlertTriangle className="inline w-3.5 h-3.5 me-1" />}
+              {testResult.msg}
+            </motion.p>
+          )}
+        </div>
+
+        {/* Payload reference */}
+        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(16,185,129,0.12)' }}>
+          <div className="px-4 py-2 text-[11px] font-mono" style={{ background: 'rgba(16,185,129,0.07)', color: '#34d399' }}>
+            // Expected JSON payload from Rule Engine
+          </div>
+          <pre className="px-4 py-3 text-[11px] font-mono leading-5 overflow-x-auto"
+               style={{ background: 'rgba(0,0,0,0.25)', color: '#9ca3af' }}>
+{`{
+  "generator_code": "GEN-RM-0042",
+  "status":         "online" | "offline" | "fault",
+  "current_load":   450.5,    // kW  (0 – 10,000)
+  "voltage":        380.0     // V   (0 – 50,000)
+}`}
+          </pre>
+        </div>
+      </SSection>
+
+      {/* ── 3. MQTT ──────────────────────────────────────────────── */}
+      <SSection title="MQTT Broker" icon={Radio} color="#0ea5e9">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SField label="Broker Host">
+            <SInput value={cfg.mqttHost} onChange={(v) => set('mqttHost', v)} placeholder="mqtt.anbar-grid.local" />
+          </SField>
+          <SField label="Port">
+            <SInput value={cfg.mqttPort} onChange={(v) => set('mqttPort', v)} placeholder="1883" type="number" />
+          </SField>
+        </div>
+        <SField label="Topic Pattern" hint="استخدم + كـ wildcard لاسم الجهاز">
+          <SInput value={cfg.mqttTopic} onChange={(v) => set('mqttTopic', v)} placeholder="spgms/ramadi/+/telemetry" />
+        </SField>
+        <div className="pt-1">
+          <SToggle
+            checked={cfg.mqttTls}
+            onChange={(v) => set('mqttTls', v)}
+            label="تشفير TLS / SSL"
+            sub="استخدم المنفذ 8883 عند تفعيل TLS"
+          />
+          <SToggle
+            checked={cfg.mqttBridge}
+            onChange={(v) => set('mqttBridge', v)}
+            label="Bridge Mode"
+            sub="لتجميع عدة Brokers في تدفق واحد"
+          />
+        </div>
+      </SSection>
+
+      {/* ── 4. Dashboard Behavior ─────────────────────────────────── */}
+      <SSection title="سلوك لوحة التحكم" icon={SlidersHorizontal} color="#a855f7">
+        <SField label="فترة التحديث التلقائي (ثانية)" hint="الحد الأدنى المُوصى: 5 ثوانٍ">
+          <SInput value={cfg.refreshInterval} onChange={(v) => set('refreshInterval', v)} type="number" />
+        </SField>
+        <SField label="الحد الأقصى لحمل المولد (kW)" hint="القراءات فوق هذا الحد ستُظلَّل باللون الأحمر">
+          <SInput value={cfg.loadMax} onChange={(v) => set('loadMax', v)} type="number" placeholder="900" />
+        </SField>
+      </SSection>
+
+      {/* ── 5. Alerts & Thresholds ────────────────────────────────── */}
+      <SSection title="حدود التنبيه والتحذير" icon={BellRing} color="#f59e0b">
+        <div>
+          <SToggle
+            checked={cfg.alertOnFault}
+            onChange={(v) => set('alertOnFault', v)}
+            label="تنبيه عند حالة عطل (fault)"
+            sub="إشعار فوري عند وصول حالة fault من ThingsBoard"
+          />
+          <SToggle
+            checked={cfg.alertOnOffline}
+            onChange={(v) => set('alertOnOffline', v)}
+            label="تنبيه عند انقطاع الاتصال (offline)"
+            sub="إشعار عند توقف إرسال البيانات من المولد"
+          />
+          <SToggle
+            checked={cfg.alertOnVoltage}
+            onChange={(v) => set('alertOnVoltage', v)}
+            label="تنبيه عند تذبذب الفولتية"
+            sub="يُفعَّل عند خروج الفولتية عن النطاق المُحدَّد أدناه"
+          />
+        </div>
+        {cfg.alertOnVoltage && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="grid grid-cols-2 gap-4 pt-1">
+            <SField label="الحد الأدنى للفولتية (V)">
+              <SInput value={cfg.voltageMin} onChange={(v) => set('voltageMin', v)} type="number" placeholder="340" />
+            </SField>
+            <SField label="الحد الأقصى للفولتية (V)">
+              <SInput value={cfg.voltageMax} onChange={(v) => set('voltageMax', v)} type="number" placeholder="420" />
+            </SField>
+          </motion.div>
+        )}
+      </SSection>
+
+      {/* ── 6. Security ───────────────────────────────────────────── */}
+      <SSection title="الأمان والصلاحيات" icon={Shield} color="#ef4444">
+        <div className="rounded-xl p-4 space-y-2"
+             style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
+          <p className="text-xs font-semibold" style={{ color: '#ef4444', fontFamily: 'var(--font-ibm-arabic)' }}>
+            تحذيرات أمنية
+          </p>
+          <ul className="space-y-1.5 text-xs" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
+            {[
+              'لا تُشارك WEBHOOK_SECRET — يمنح الوصول الكامل لكتابة بيانات التلغراف',
+              'استخدم HTTPS وليس HTTP في بيئة الإنتاج',
+              'يُخزَّن Tenant Token محلياً (localStorage) — لا يُرسَل إلى أي خادم',
+              'بدّل كلمة المرور الافتراضية لـ ThingsBoard (sysadmin@thingsboard.org) فوراً',
+            ].map((w) => (
+              <li key={w} className="flex items-start gap-2">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
+                {w}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <SToggle
+          checked={false}
+          onChange={() => {}}
+          label="تسجيل طلبات الـ Webhook في Supabase Logs"
+          sub="مفيد للتشخيص — يزيد من حجم السجلات"
+        />
+      </SSection>
+
+      {/* Bottom save */}
+      <div className="flex justify-end gap-3 pb-4">
+        <button
+          onClick={reset}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm transition-all"
+          style={{
+            background: 'rgba(255,255,255,0.04)',
+            border:     '1px solid rgba(255,255,255,0.08)',
+            color:      'var(--text-4)',
+            fontFamily: 'var(--font-ibm-arabic)',
+          }}
+        >
+          <RotateCcw className="w-4 h-4" />
+          استعادة الافتراضي
+        </button>
+        <button
+          onClick={save}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          style={{
+            background: 'linear-gradient(135deg, rgba(16,185,129,0.25), rgba(14,165,233,0.2))',
+            border:     '1px solid rgba(16,185,129,0.35)',
+            color:      '#10b981',
+            fontFamily: 'var(--font-ibm-arabic)',
+            boxShadow:  saved ? '0 0 20px rgba(16,185,129,0.15)' : 'none',
+          }}
+        >
+          <Save className="w-4 h-4" />
+          {saved ? 'تم الحفظ ✓' : 'حفظ جميع الإعدادات'}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 export default function ThingsBoardPage() {
   const [rows, setRows]             = useState<LiveRow[]>([]);
@@ -147,7 +649,7 @@ export default function ThingsBoardPage() {
   const [health, setHealth]         = useState<HealthStatus>('checking');
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [activeTab, setActiveTab]   = useState<'telemetry' | 'architecture' | 'guide'>('telemetry');
+  const [activeTab, setActiveTab]   = useState<'telemetry' | 'architecture' | 'guide' | 'settings'>('telemetry');
 
   // mock load-history per generator (last 10 readings)
   const [sparkData] = useState<Record<string, number[]>>(() => ({}));
@@ -188,9 +690,10 @@ export default function ThingsBoardPage() {
   const avgVolt = total ? Math.round(rows.reduce((s, r) => s + r.voltage, 0) / total) : 0;
 
   const TABS = [
-    { key: 'telemetry',    label: 'التلغراف الحي',     icon: Activity },
-    { key: 'architecture', label: 'معمارية التكامل',   icon: Layers   },
-    { key: 'guide',        label: 'دليل الإعداد',      icon: Info     },
+    { key: 'telemetry',    label: 'التلغراف الحي',     icon: Activity       },
+    { key: 'architecture', label: 'معمارية التكامل',   icon: Layers         },
+    { key: 'guide',        label: 'دليل الإعداد',      icon: Info           },
+    { key: 'settings',     label: 'الإعدادات',          icon: Settings2      },
   ] as const;
 
   return (
@@ -560,8 +1063,7 @@ export default function ThingsBoardPage() {
         )}
 
         {/* ── Tab: Setup Guide ────────────────────────────────────── */}
-        {activeTab === 'guide' && (
-          <motion.div key="guide"
+        {activeTab === 'guide' && (          <motion.div key="guide"
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}
             className="space-y-4">
@@ -663,6 +1165,10 @@ export default function ThingsBoardPage() {
             ))}
           </motion.div>
         )}
+
+        {/* ── Tab: Settings ───────────────────────────────────────── */}
+        {activeTab === 'settings' && <SettingsTab />}
+
       </AnimatePresence>
     </div>
   );
