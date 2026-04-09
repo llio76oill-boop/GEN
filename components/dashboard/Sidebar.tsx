@@ -108,13 +108,15 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
                     {item.label}
                   </span>
                   {item.badge && (
-                    <span className={`text-[10px] rounded-full px-1.5 leading-5 min-w-[20px] text-center font-medium ${
-                      item.badge === 'LIVE'
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'bg-red-500/80 text-white'
-                    }`}>
-                      {item.badge === 'LIVE' ? '●' : item.badge}
-                    </span>
+                    item.badge === 'LIVE' ? (
+                      <span className="text-[10px] rounded-full px-2 leading-5 font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        ●
+                      </span>
+                    ) : (
+                      <span className="text-[10px] bg-red-500/80 text-white rounded-full px-1.5 leading-5 min-w-[20px] text-center">
+                        {item.badge}
+                      </span>
+                    )
                   )}
                 </motion.div>
               </motion.div>
