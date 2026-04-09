@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AnimatedBackground from '@/components/landing/AnimatedBackground';
 import AuthContainer from '@/components/landing/AuthContainer';
+import FeaturesSection from '@/components/landing/FeaturesSection';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 
@@ -25,7 +26,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="relative min-h-screen w-full overflow-hidden flex flex-col lg:flex-row bg-[var(--background)] theme-transitioning">
+    <main className="relative w-full overflow-hidden flex flex-col bg-[var(--background)] theme-transitioning">
       
       {/* Theme Toggle Button (Top Left) */}
       <button
@@ -41,34 +42,41 @@ export default function HomePage() {
         {isDark ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-indigo-500" />}
       </button>
 
-      {/* Left side: Buttons & Controls (اليسار) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center relative min-h-[50vh] lg:min-h-screen order-2 lg:order-1">
-        <AnimatedBackground />
-        <AuthContainer onPortalClick={handlePortalClick} activePortal={activePortal} isDark={isDark} />
-      </div>
+      {/* ── Hero row: portal buttons (left) + logo (right) ── */}
+      <div className="w-full flex flex-col lg:flex-row min-h-screen">
 
-      {/* Right side: White area with Anbar Logo (اليمين) */}
-      <div 
-        className="w-full lg:w-1/2 bg-white flex flex-col items-center justify-center p-12 min-h-[50vh] lg:min-h-screen relative z-40 order-1 lg:order-2 shadow-[-20px_0_50px_rgba(0,0,0,0.05)] border-b lg:border-b-0 lg:border-l border-gray-100" 
-        style={{ direction: 'rtl' }}
-      >
-        <div className="max-w-md text-center space-y-8">
-          <img 
-            src="https://j.top4top.io/p_3749e3ihh1.png" 
-            alt="شعار محافظة الانبار" 
-            className="w-full max-w-[280px] mx-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500"
-          />
-          <div className="space-y-4">
-             <h2 className="text-3xl lg:text-4xl font-bold text-slate-800 tracking-tight" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-               محافظة الأنبار
-             </h2>
-             <div className="h-1 w-20 bg-emerald-500 mx-auto rounded-full"></div>
-             <p className="text-slate-500 text-lg leading-relaxed" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-               البوابة الإلكترونية الموحدة لإدارة ومتابعة منظومة الشبكة الكهربائية والمولدات الأهلية
-             </p>
+        {/* Left side: Buttons & Controls (اليسار) */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center relative min-h-[50vh] lg:min-h-screen order-2 lg:order-1">
+          <AnimatedBackground />
+          <AuthContainer onPortalClick={handlePortalClick} activePortal={activePortal} isDark={isDark} />
+        </div>
+
+        {/* Right side: White area with Anbar Logo (اليمين) */}
+        <div 
+          className="w-full lg:w-1/2 bg-white flex flex-col items-center justify-center p-12 min-h-[50vh] lg:min-h-screen relative z-40 order-1 lg:order-2 shadow-[-20px_0_50px_rgba(0,0,0,0.05)] border-b lg:border-b-0 lg:border-l border-gray-100" 
+          style={{ direction: 'rtl' }}
+        >
+          <div className="max-w-md text-center space-y-8">
+            <img 
+              src="https://j.top4top.io/p_3749e3ihh1.png" 
+              alt="شعار محافظة الانبار" 
+              className="w-full max-w-[280px] mx-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500"
+            />
+            <div className="space-y-4">
+               <h2 className="text-3xl lg:text-4xl font-bold text-slate-800 tracking-tight" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                 محافظة الأنبار
+               </h2>
+               <div className="h-1 w-20 bg-emerald-500 mx-auto rounded-full"></div>
+               <p className="text-slate-500 text-lg leading-relaxed" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+                 البوابة الإلكترونية الموحدة لإدارة ومتابعة منظومة الشبكة الكهربائية والمولدات الأهلية
+               </p>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* ── Features Section (مميزات النظام) ── */}
+      <FeaturesSection />
 
     </main>
   );
