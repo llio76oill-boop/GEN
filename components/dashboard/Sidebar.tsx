@@ -5,21 +5,22 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Map, BarChart3, Zap, Settings,
-  FileText, Bell, ShieldCheck, Activity, Users, Globe,
+  FileText, Bell, ShieldCheck, Activity, Users, Globe, Cpu,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const NAV = [
-  { icon: LayoutDashboard, label: 'لوحة التحكم',      href: '/dashboard',                badge: null,   external: false },
-  { icon: Map,             label: 'الخريطة الحية',    href: '/dashboard/map',            badge: null,   external: false },
-  { icon: Activity,        label: 'مركز الأعطال',     href: '/dashboard/faults',         badge: 7,      external: false },
-  { icon: BarChart3,       label: 'التحليلات',         href: '/dashboard/analytics',     badge: null,   external: false },
-  { icon: Zap,             label: 'المولدات',          href: '/dashboard/generators',    badge: null,   external: false },
-  { icon: Users,           label: 'أصحاب المولدات',   href: '/dashboard/owners',         badge: null,   external: false },
-  { icon: Bell,            label: 'الإشعارات',         href: '/dashboard/notifications',  badge: 12,    external: false },
-  { icon: ShieldCheck,     label: 'الأمان والوصول',   href: '/dashboard/security',       badge: null,  external: false },
-  { icon: FileText,        label: 'التوثيق والسجلات', href: '/dashboard/docs',           badge: null,   external: false },
-  { icon: Settings,        label: 'الإعدادات',         href: '/dashboard/settings',      badge: null,   external: false },
+  { icon: LayoutDashboard, label: 'لوحة التحكم',      href: '/dashboard',                   badge: null,  external: false },
+  { icon: Map,             label: 'الخريطة الحية',    href: '/dashboard/map',               badge: null,  external: false },
+  { icon: Activity,        label: 'مركز الأعطال',     href: '/dashboard/faults',            badge: 7,     external: false },
+  { icon: BarChart3,       label: 'التحليلات',         href: '/dashboard/analytics',        badge: null,  external: false },
+  { icon: Zap,             label: 'المولدات',          href: '/dashboard/generators',       badge: null,  external: false },
+  { icon: Users,           label: 'أصحاب المولدات',   href: '/dashboard/owners',            badge: null,  external: false },
+  { icon: Cpu,             label: 'ThingsBoard IoT',  href: '/dashboard/thingsboard',       badge: 'LIVE', external: false },
+  { icon: Bell,            label: 'الإشعارات',         href: '/dashboard/notifications',    badge: 12,    external: false },
+  { icon: ShieldCheck,     label: 'الأمان والوصول',   href: '/dashboard/security',          badge: null,  external: false },
+  { icon: FileText,        label: 'التوثيق والسجلات', href: '/dashboard/docs',              badge: null,  external: false },
+  { icon: Settings,        label: 'الإعدادات',         href: '/dashboard/settings',         badge: null,  external: false },
 ];
 
 const CITIZEN = { icon: Globe, label: 'بوابة المواطن', href: '/citizen' };
@@ -107,8 +108,12 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
                     {item.label}
                   </span>
                   {item.badge && (
-                    <span className="text-[10px] bg-red-500/80 text-white rounded-full px-1.5 leading-5 min-w-[20px] text-center">
-                      {item.badge}
+                    <span className={`text-[10px] rounded-full px-1.5 leading-5 min-w-[20px] text-center font-medium ${
+                      item.badge === 'LIVE'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        : 'bg-red-500/80 text-white'
+                    }`}>
+                      {item.badge === 'LIVE' ? '●' : item.badge}
                     </span>
                   )}
                 </motion.div>
