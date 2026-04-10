@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Map, BarChart3, Zap, Settings,
-  FileText, Bell, ShieldCheck, Activity, Users, Globe, Cpu, Gauge,
+  FileText, Bell, ShieldCheck, Activity, Users, Globe, Cpu, Gauge, DollarSign,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -16,6 +16,7 @@ const NAV = [
   { icon: BarChart3,       label: 'التحليلات',         href: '/dashboard/analytics',        badge: null,  external: false },
   { icon: Zap,             label: 'المولدات',          href: '/dashboard/generators',       badge: null,  external: false },
   { icon: Users,           label: 'أصحاب المولدات',   href: '/dashboard/owners',            badge: null,  external: false },
+  { icon: DollarSign,      label: 'التسعير والفواتير', href: '/dashboard/billing',           badge: null,  external: false },
   { icon: Cpu,             label: 'ThingsBoard IoT',  href: '/dashboard/thingsboard',       badge: 'LIVE', external: false },
   { icon: Gauge,           label: 'ThingSpeak',        href: '/dashboard/thingspeak',        badge: 'LIVE', external: false },
   { icon: Bell,            label: 'الإشعارات',         href: '/dashboard/notifications',    badge: 12,    external: false },
