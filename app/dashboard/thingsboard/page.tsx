@@ -664,6 +664,8 @@ export default function ThingsBoardPage() {
   // ── ThingSpeak bridge state ───────────────────────────────────────────────
   const [tsGens, setTsGens]         = useState<TsGen[]>([]);
   const [tsLoading, setTsLoading]   = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncToast, setSyncToast]     = useState<{ msg: string; ok: boolean } | null>(null);
 
   // mock load-history per generator (last 10 readings)
   const [sparkData] = useState<Record<string, number[]>>(() => ({}));
@@ -758,6 +760,35 @@ export default function ThingsBoardPage() {
     const id = setInterval(fetchTsGens, 15_000);
     return () => clearInterval(id);
   }, [autoRefresh, fetchTsGens]);
+
+  // ── Auto-Discovery: invoke Edge Function → sync all ThingSpeak channels ──
+  const handleSync = useCallback(async () => {
+    if (syncLoading) return;
+    setSyncLoading(true);
+    setSyncToast(null);
+    try {
+      const { data, error: fnErr } = await supabase.functions.invoke<{
+        ok: boolean; error?: string;
+        inserted: number; updated: number; skipped: number;
+      }>('sync-thingspeak-channels');
+
+      if (fnErr) throw fnErr;
+      if (!data?.ok) throw new Error(data?.error ?? 'الاستجابة غير صالحة');
+
+      setSyncToast({
+        ok: true,
+        msg: `تمت مزامنة المولدات بنجاح — ${data.inserted} جديد · ${data.updated} محدَّث · ${data.skipped} متجاهَل`,
+      });
+      // Force immediate re-fetch so new channels appear without page reload
+      await fetchTsGens();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setSyncToast({ ok: false, msg: `فشلت المزامنة: ${msg}` });
+    } finally {
+      setSyncLoading(false);
+      setTimeout(() => setSyncToast(null), 6000);
+    }
+  }, [syncLoading, fetchTsGens]);
 
   // derived stats — merge TB rows + ThingSpeak generators
   const tsOnline  = tsGens.filter((g) => g.status === 'online').length;
@@ -968,11 +999,55 @@ export default function ThingsBoardPage() {
                       {tsGens.length} قناة
                     </span>
                   </div>
-                  <button onClick={fetchTsGens} disabled={tsLoading}
-                          className="p-1.5 rounded-lg transition-all"
-                          style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)', color: '#a855f7' }}>
-                    <RefreshCw className={`w-3.5 h-3.5 ${tsLoading ? 'animate-spin' : ''}`} />
-                  </button>
+                  {/* Actions: Auto-Discovery Sync + manual refresh */}
+                  <div className="flex items-center gap-2">
+                    {/* Sync toast (inline, anchored to button row) */}
+                    {syncToast && (
+                      <span
+                        role="status"
+                        aria-live="assertive"
+                        className="text-xs px-3 py-1 rounded-lg font-semibold"
+                        style={{
+                          fontFamily: 'var(--font-ibm-arabic)',
+                          background:  syncToast.ok ? 'rgba(16,185,129,0.12)' : 'rgba(30,3,3,0.95)',
+                          border:      syncToast.ok ? '1px solid rgba(16,185,129,0.35)' : '2px solid rgba(239,68,68,0.7)',
+                          color:       syncToast.ok ? '#6ee7b7' : '#fca5a5',
+                          fontWeight:  syncToast.ok ? 500 : 700,
+                          direction:   'rtl',
+                          maxWidth:    '22rem',
+                          whiteSpace:  'nowrap',
+                          overflow:    'hidden',
+                          textOverflow:'ellipsis',
+                        }}
+                      >
+                        {syncToast.msg}
+                      </span>
+                    )}
+                    {/* Auto-discovery button */}
+                    <button
+                      onClick={handleSync}
+                      disabled={syncLoading || tsLoading}
+                      aria-label="اكتشاف تلقائي ومزامنة قنوات ThingSpeak"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all select-none"
+                      style={{
+                        background: syncLoading ? 'rgba(168,85,247,0.18)' : 'rgba(168,85,247,0.1)',
+                        border: '1px solid rgba(168,85,247,0.3)',
+                        color: '#c084fc',
+                        cursor: syncLoading ? 'not-allowed' : 'pointer',
+                        opacity: syncLoading ? 0.75 : 1,
+                        fontFamily: 'var(--font-ibm-arabic)',
+                      }}
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 flex-shrink-0 ${syncLoading ? 'animate-spin' : ''}`} />
+                      {syncLoading ? 'جارٍ المزامنة…' : 'اكتشاف تلقائي'}
+                    </button>
+                    {/* Manual refresh */}
+                    <button onClick={fetchTsGens} disabled={tsLoading}
+                            className="p-1.5 rounded-lg transition-all"
+                            style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)', color: '#a855f7' }}>
+                      <RefreshCw className={`w-3.5 h-3.5 ${tsLoading ? 'animate-spin' : ''}`} />
+                    </button>
+                  </div>
                 </div>
 
                 {tsLoading && tsGens.length === 0 ? (

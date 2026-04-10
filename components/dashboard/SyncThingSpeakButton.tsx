@@ -33,31 +33,25 @@ export default function SyncThingSpeakButton({ onSynced }: SyncThingSpeakButtonP
     setToast(null);
 
     try {
-      // Retrieve the current session token to authenticate the Edge Function call
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
+      // supabase.functions.invoke automatically sends:
+      //   apikey: NEXT_PUBLIC_SUPABASE_ANON_KEY   (required by Supabase gateway)
+      //   Authorization: Bearer <session jwt>      (if user is logged in)
+      const { data, error: fnErr } = await supabase.functions.invoke<{
+        ok: boolean;
+        error?: string;
+        inserted: number;
+        updated: number;
+        skipped: number;
+      }>('sync-thingspeak-channels');
 
-      const edgeFunctionUrl =
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/sync-thingspeak-channels`;
-
-      const res = await fetch(edgeFunctionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-      });
-
-      const body = await res.json();
-
-      if (!res.ok || !body.ok) {
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
+      // fnErr is set for network failures or non-2xx HTTP from the Edge Function
+      if (fnErr) throw fnErr;
+      if (!data?.ok) throw new Error(data?.error ?? 'الاستجابة غير صالحة من الدالة');
 
       const summary: SyncSummary = {
-        inserted: body.inserted ?? 0,
-        updated:  body.updated  ?? 0,
-        skipped:  body.skipped  ?? 0,
+        inserted: data.inserted ?? 0,
+        updated:  data.updated  ?? 0,
+        skipped:  data.skipped  ?? 0,
       };
 
       setState('success');
@@ -66,9 +60,8 @@ export default function SyncThingSpeakButton({ onSynced }: SyncThingSpeakButtonP
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setState('error');
-      showToast(`❌ فشل المزامنة: ${msg}`);
+      showToast(`❌ فشلت المزامنة: ${msg}`);
     } finally {
-      // Return to idle after a short pause so the icon animates back
       setTimeout(() => setState('idle'), 3000);
     }
   };
@@ -118,9 +111,13 @@ export default function SyncThingSpeakButton({ onSynced }: SyncThingSpeakButtonP
           aria-live="polite"
           className="absolute top-full mt-2 end-0 z-50 w-80 rounded-xl px-4 py-3 text-sm shadow-xl"
           style={{
-            background:  'rgba(15,15,20,0.95)',
-            border:      `1px solid ${isError ? 'rgba(239,68,68,0.4)' : 'rgba(16,185,129,0.4)'}`,
-            color:       'var(--text-1)',
+            background:  isError ? 'rgba(30,5,5,0.97)' : 'rgba(15,15,20,0.95)',
+            border:      isError
+              ? '2px solid rgba(239,68,68,0.75)'
+              : '1px solid rgba(16,185,129,0.4)',
+            color:       isError ? '#fca5a5' : 'var(--text-1)',
+            fontWeight:  isError ? 700 : 500,
+            fontSize:    isError ? '0.8125rem' : '0.875rem',
             fontFamily: 'var(--font-ibm-arabic)',
             direction:   'rtl',
           }}

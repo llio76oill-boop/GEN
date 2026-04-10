@@ -55,7 +55,7 @@ export default function GeneratorsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <SyncThingSpeakButton onSynced={() => window.location.reload()} />
+          <SyncThingSpeakButton onSynced={() => { /* channels synced to owned_generators — view results in ThingsBoard */ }} />
           <button
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[var(--text-1)] transition-colors"
             style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', fontFamily: 'var(--font-ibm-arabic)' }}
