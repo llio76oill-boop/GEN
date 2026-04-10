@@ -334,7 +334,7 @@ function BillingInquiry() {
                     </span>
                   )}
                   {bill.status !== 'paid' && (
-                    <Link href={`/citizen/checkout?sub=${subscriber.sub_code}`} className="flex-1">
+                    <Link href={`/dashboard/billing/checkout?sub=${subscriber.sub_code}`} className="flex-1">
                       <button
                         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all"
                         style={{
