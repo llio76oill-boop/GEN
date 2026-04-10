@@ -691,7 +691,8 @@ export default function ThingsBoardPage() {
       const { data: gens } = await supabase
         .from('owned_generators')
         .select('code, area, thingspeak_channel_id, thingspeak_read_key')
-        .not('thingspeak_channel_id', 'is', null);
+        .not('thingspeak_channel_id', 'is', null)
+        .neq('is_mock', true);
 
       if (!gens || gens.length === 0) { setTsLoading(false); return; }
 
@@ -989,7 +990,7 @@ export default function ThingsBoardPage() {
                         : g.voltage <= 240 ? '#10b981'
                         : '#f59e0b';
                       return (
-                        <div key={g.code} className="px-5 py-4 flex items-center gap-4 flex-wrap hover:bg-white/[0.015] transition-colors">
+                        <div key={g.channel ?? g.code} className="px-5 py-4 flex items-center gap-4 flex-wrap hover:bg-white/[0.015] transition-colors">
                           {/* Status dot */}
                           <span className="w-2 h-2 rounded-full flex-shrink-0"
                                 style={{ background: sc, boxShadow: g.status === 'online' ? `0 0 6px ${sc}` : 'none' }} />
