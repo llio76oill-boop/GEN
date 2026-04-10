@@ -24,6 +24,7 @@ interface LiveRow {
 
 // ThingSpeak-sourced generator (bridges ThingSpeak → ThingsBoard view)
 interface TsGen {
+  id:       number;
   code:     string;
   area:     string;
   channel:  string;
@@ -691,7 +692,7 @@ export default function ThingsBoardPage() {
     try {
       const { data: gens } = await supabase
         .from('owned_generators')
-        .select('code, area, thingspeak_channel_id, thingspeak_read_key')
+        .select('id, code, area, thingspeak_channel_id, thingspeak_read_key')
         .not('thingspeak_channel_id', 'is', null)
         .neq('is_mock', true);
 
@@ -707,6 +708,7 @@ export default function ThingsBoardPage() {
             const feed = json.feeds?.[0];
             const v = feed?.field1 ? parseFloat(feed.field1) : null;
             return {
+              id:       g.id,
               code:     g.code,
               area:     g.area,
               channel:  g.thingspeak_channel_id,
@@ -718,6 +720,7 @@ export default function ThingsBoardPage() {
             } satisfies TsGen;
           } catch {
             return {
+              id:       g.id,
               code:     g.code,
               area:     g.area,
               channel:  g.thingspeak_channel_id,
@@ -991,7 +994,7 @@ export default function ThingsBoardPage() {
                         : g.voltage <= 240 ? '#10b981'
                         : '#f59e0b';
                       return (
-                        <div key={g.channel ?? g.code} className="px-5 py-4 flex items-center gap-4 flex-wrap hover:bg-white/[0.015] transition-colors">
+                        <div key={g.id} className="px-5 py-4 flex items-center gap-4 flex-wrap hover:bg-white/[0.015] transition-colors">
                           {/* Status dot */}
                           <span className="w-2 h-2 rounded-full flex-shrink-0"
                                 style={{ background: sc, boxShadow: g.status === 'online' ? `0 0 6px ${sc}` : 'none' }} />
