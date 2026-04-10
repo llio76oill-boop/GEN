@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import {
   Cpu, Wifi, WifiOff, Zap, AlertTriangle, CheckCircle2,
   RefreshCw, ArrowUpRight, Info, ServerCrash, Radio,
   Activity, BarChart3, Clock, Layers, Settings2,
   Eye, EyeOff, Save, RotateCcw, Copy, Check, FlaskConical,
-  Shield, Globe, SlidersHorizontal, BellRing, Gauge,
+  Shield, Globe, SlidersHorizontal, BellRing, Gauge, ExternalLink,
 } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -1018,11 +1019,20 @@ export default function ThingsBoardPage() {
                           {/* Channel link */}
                           <a href={`https://thingspeak.com/channels/${g.channel}`}
                              target="_blank" rel="noopener noreferrer"
-                             className="text-[10px] font-mono flex items-center gap-1 ms-auto hover:opacity-80 transition-opacity"
+                             className="text-[10px] font-mono flex items-center gap-1 hover:opacity-80 transition-opacity"
                              style={{ color: '#a855f7' }}>
                             <Radio className="w-3 h-3" />
                             CH {g.channel}
                           </a>
+                          {/* Profile link */}
+                          <Link
+                            href={`/dashboard/generators/${g.code}`}
+                            className="ms-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all flex-shrink-0"
+                            style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#3b82f6', fontFamily: 'var(--font-ibm-arabic)' }}
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            عرض الملف
+                          </Link>
                           {/* Last seen */}
                           {g.lastSeen && (
                             <span className="text-[10px] flex items-center gap-1 flex-shrink-0"
