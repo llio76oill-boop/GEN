@@ -9,6 +9,19 @@ interface Entry {
 
 const CHANGELOG: Entry[] = [
   {
+    version: 'v2.3.0', date: 'أبريل 2026',
+    title: 'لوحة القياسات الديناميكية — تعيين حقول ThingSpeak',
+    items: [
+      { type: 'feature', text: 'عمود JSONB جديد: thingspeak_fields_map — يخزن تعيين حقول القناة (field1→voltage…)' },
+      { type: 'enhance', text: 'Edge Function محدَّثة: تستخرج field1…field8 من ThingSpeak وتحفظها في JSONB' },
+      { type: 'feature', text: 'مكوّن DynamicTelemetryDashboard: يعرض widgets مختلفة تلقائياً حسب نوع الحقل' },
+      { type: 'feature', text: 'Voltage: مقياس نصف دائري (0–300V) أحمر تحت 180V، أخضر في المدى الطبيعي' },
+      { type: 'feature', text: 'Current: مخطط Sparkline خطي مع إشارة الاتجاه (+/−)' },
+      { type: 'feature', text: 'Power: بطاقة KPI كبيرة مع شريط توهج وعرض الكيلوواط' },
+      { type: 'enhance', text: 'تحديث تلقائي كل 15 ثانية مع زر تحديث يدوي' },
+    ],
+  },
+  {
     version: 'v2.2.0', date: 'أبريل 2026',
     title: 'اكتشاف القنوات التلقائي — مزامنة ThingSpeak',
     items: [
@@ -121,7 +134,7 @@ export default function DocsPage() {
       {/* System info cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { Icon: LayoutDashboard, label: 'الإصدار',     value: 'v2.2.0'   },
+          { Icon: LayoutDashboard, label: 'الإصدار',     value: 'v2.3.0'   },
           { Icon: Zap,             label: 'المولدات',    value: '3,000'    },
           { Icon: Gauge,           label: 'نسبة التشغيل', value: '87.3%'  },
           { Icon: WrenchIcon,      label: 'الأعطال',      value: '62 نشط'  },

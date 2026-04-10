@@ -20,8 +20,23 @@ interface ThingSpeakChannel {
   created_at: string;
   updated_at: string;
   last_entry_id: number | null;
+  // Dynamic field labels configured by the user in ThingSpeak
+  field1?: string; field2?: string; field3?: string;
+  field4?: string; field5?: string; field6?: string;
+  field7?: string; field8?: string;
   // The User key response includes api_keys array
   api_keys?: Array<{ api_key: string; write_flag: boolean }>;
+}
+
+// Build a JSONB-ready mapping of non-empty field labels
+function extractFieldsMap(ch: ThingSpeakChannel): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (let i = 1; i <= 8; i++) {
+    const key = `field${i}` as keyof ThingSpeakChannel;
+    const label = ch[key] as string | undefined;
+    if (label && label.trim()) map[`field${i}`] = label.trim();
+  }
+  return map;
 }
 
 interface SyncResult {
@@ -112,14 +127,18 @@ Deno.serve(async (req: Request) => {
     const readKey =
       ch.api_keys?.find((k) => !k.write_flag)?.api_key ?? null;
 
+    // Extract JSONB field-name map: { field1: "voltage", field2: "current", … }
+    const fieldsMap = extractFieldsMap(ch);
+
     if (existingMap.has(channelId)) {
-      // ── UPDATE: refresh name & read key if changed ────────
+      // ── UPDATE: refresh name, read key, and field map ─────
       const existing = existingMap.get(channelId)!;
       const { error } = await supabase
         .from('owned_generators')
         .update({
-          ...(ch.name ? { code: ch.name } : {}),
-          ...(readKey   ? { thingspeak_read_key: readKey } : {}),
+          ...(ch.name                       ? { code: ch.name }                       : {}),
+          ...(readKey                        ? { thingspeak_read_key: readKey }        : {}),
+          ...(Object.keys(fieldsMap).length  ? { thingspeak_fields_map: fieldsMap }   : {}),
         })
         .eq('id', existing.id);
 
@@ -132,8 +151,6 @@ Deno.serve(async (req: Request) => {
       }
     } else {
       // ── INSERT: new channel discovered ────────────────────
-      // We need a valid owner_id — use owner id=1 as placeholder
-      // (admin completes profile later from the UI)
       const { data: ownerRow } = await supabase
         .from('owners')
         .select('id')
@@ -142,18 +159,19 @@ Deno.serve(async (req: Request) => {
         .limit(1)
         .maybeSingle();
 
-      const ownerId = ownerRow?.id ?? 1; // fallback to first seeded owner
+      const ownerId = ownerRow?.id ?? 1;
 
       const { error } = await supabase.from('owned_generators').insert({
-        owner_id:              ownerId,
-        code:                  ch.name || `CH-${channelId}`,
-        area:                  'غير محدد',
-        power:                 0,
-        status:                'offline',          // safe default
-        total_hours:           0,
-        thingspeak_channel_id: channelId,
-        thingspeak_read_key:   readKey,
-        is_mock:               false,
+        owner_id:                ownerId,
+        code:                    ch.name || `CH-${channelId}`,
+        area:                    'غير محدد',
+        power:                   0,
+        status:                  'offline',
+        total_hours:             0,
+        thingspeak_channel_id:   channelId,
+        thingspeak_read_key:     readKey,
+        thingspeak_fields_map:   Object.keys(fieldsMap).length ? fieldsMap : null,
+        is_mock:                 false,
       });
 
       if (error) {

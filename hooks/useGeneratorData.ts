@@ -4,21 +4,22 @@ import { supabase } from '@/lib/supabase';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface GeneratorProfile {
-  id:                    number;
-  code:                  string;
-  area:                  string;
-  power:                 number;
-  status:                'online-grid' | 'online-gen' | 'fault' | 'offline';
-  total_hours:           number;
-  license_number:        string | null;
-  address:               string | null;
-  monthly_fuel_quota:    number | null;
-  thingspeak_channel_id: string | null;
-  thingspeak_read_key:   string | null;
-  owner_name:            string;
-  owner_phone:           string;
-  owner_initials:        string;
-  owned_since:           string;
+  id:                     number;
+  code:                   string;
+  area:                   string;
+  power:                  number;
+  status:                 'online-grid' | 'online-gen' | 'fault' | 'offline';
+  total_hours:            number;
+  license_number:         string | null;
+  address:                string | null;
+  monthly_fuel_quota:     number | null;
+  thingspeak_channel_id:  string | null;
+  thingspeak_read_key:    string | null;
+  thingspeak_fields_map:  Record<string, string> | null;
+  owner_name:             string;
+  owner_phone:            string;
+  owner_initials:         string;
+  owned_since:            string;
 }
 
 export interface TsFeed {
@@ -82,6 +83,7 @@ export function useGeneratorData(generatorId: string | number): UseGeneratorData
           monthly_fuel_quota,
           thingspeak_channel_id,
           thingspeak_read_key,
+          thingspeak_fields_map,
           owners (
             name,
             phone,
@@ -110,8 +112,9 @@ export function useGeneratorData(generatorId: string | number): UseGeneratorData
         license_number:        data.license_number,
         address:               data.address,
         monthly_fuel_quota:    data.monthly_fuel_quota,
-        thingspeak_channel_id: data.thingspeak_channel_id,
-        thingspeak_read_key:   data.thingspeak_read_key,
+        thingspeak_channel_id:  data.thingspeak_channel_id,
+        thingspeak_read_key:    data.thingspeak_read_key,
+        thingspeak_fields_map:  (data.thingspeak_fields_map as Record<string, string> | null) ?? null,
         owner_name:             owner?.name     ?? '—',
         owner_phone:            owner?.phone    ?? '—',
         owner_initials:         owner?.initials ?? '—',

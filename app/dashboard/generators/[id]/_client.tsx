@@ -10,6 +10,7 @@ import {
   Shield, Hash, Calendar, BarChart3,
 } from 'lucide-react';
 import { useGeneratorData, type GeneratorProfile } from '@/hooks/useGeneratorData';
+import DynamicTelemetryDashboard from '@/components/dashboard/DynamicTelemetryDashboard';
 
 // ─── Status config ─────────────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -398,6 +399,17 @@ export default function GeneratorProfilePage() {
         <MiniKpi icon={BarChart3} label="متوسط الفولتية (آخر 32)"   value={avgV}                           color="#a855f7" />
         <MiniKpi icon={Hash}      label="إجمالي القراءات"           value={feeds.length}                   color="#0ea5e9" />
       </div>
+
+      {/* ── Row 2.5: Dynamic Telemetry Dashboard (fields map) ──────────────── */}
+      {p.thingspeak_channel_id && p.thingspeak_read_key && p.thingspeak_fields_map && (
+        <DynamicTelemetryDashboard
+          channelId={p.thingspeak_channel_id}
+          readApiKey={p.thingspeak_read_key}
+          fieldsMap={p.thingspeak_fields_map}
+          historyCount={30}
+          pollIntervalMs={15_000}
+        />
+      )}
 
       {/* ── Row 3: Readings table ─────────────────────────────────────────── */}
       <AnimatePresence>
