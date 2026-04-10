@@ -1,9 +1,8 @@
 ﻿'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Power,
   Timer,
   DollarSign,
   Gauge,
@@ -15,6 +14,9 @@ import {
   Zap,
   Activity,
   LayoutDashboard,
+  RefreshCw,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -73,48 +75,6 @@ function ArcGauge({ pct, color, label, value }: { pct: number; color: string; la
   );
 }
 
-/* ── Hold Button Ring Indicator ── */
-function HoldProgress({ progress, isRunning }: { progress: number; isRunning: boolean }) {
-  const r = 72;
-  const circumference = 2 * Math.PI * r;
-  const offset = circumference - progress * circumference;
-
-  return (
-    <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 160 160">
-      {/* Background ring */}
-      <circle cx="80" cy="80" r={r} fill="none" strokeWidth="4"
-        stroke={isRunning ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'} />
-      {/* Progress ring */}
-      {progress > 0 && (
-        <circle cx="80" cy="80" r={r} fill="none" strokeWidth="4"
-          stroke={isRunning ? '#ef4444' : '#10b981'}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          style={{ filter: `drop-shadow(0 0 6px ${isRunning ? '#ef4444' : '#10b981'}80)` }}
-        />
-      )}
-    </svg>
-  );
-}
-
-/* ── Pulse Rings (when running) ── */
-function PulseRings() {
-  return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      {[0, 0.7, 1.4].map((delay, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-44 h-44 rounded-full border-2 border-emerald-400/30"
-          initial={{ scale: 0.8, opacity: 0.6 }}
-          animate={{ scale: 2.2, opacity: 0 }}
-          transition={{ duration: 2.5, delay, repeat: Infinity, ease: 'easeOut' }}
-        />
-      ))}
-    </div>
-  );
-}
-
 /* ── Main Control Room Page ── */
 export default function ControlRoomPage() {
   const router = useRouter();
@@ -170,6 +130,57 @@ export default function ControlRoomPage() {
     error,
   } = useSessionTimer(genCode, ownerName, genArea);
 
+  // ── ThingSpeak live voltage ──
+  const [voltage, setVoltage]               = useState<number | null>(null);
+  const [voltageLoading, setVoltageLoading] = useState(false);
+  const [lastVoltageTime, setLastVoltageTime] = useState<string | null>(null);
+  const [voltageRefreshTick, setVoltageRefreshTick] = useState(0);
+  const isOnline = voltage !== null && voltage > 100;
+
+  // Fetch latest voltage from ThingSpeak
+  useEffect(() => {
+    if (!thingspeakChannel) return;
+    setVoltageLoading(true);
+    fetch(`https://api.thingspeak.com/channels/${thingspeakChannel}/fields/1/last.json`)
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then((json) => {
+        const v = parseFloat(json.field1 ?? '0');
+        setVoltage(isNaN(v) ? null : v);
+        if (json.created_at) {
+          setLastVoltageTime(new Date(json.created_at).toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' }));
+        }
+      })
+      .catch(() => setVoltage(null))
+      .finally(() => setVoltageLoading(false));
+  }, [thingspeakChannel, voltageRefreshTick]);
+
+  // Auto-poll every 30 seconds
+  useEffect(() => {
+    if (!thingspeakChannel) return;
+    const id = setInterval(() => setVoltageRefreshTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, [thingspeakChannel]);
+
+  // Auto-manage session: sync with ThingSpeak status
+  const sessionRef = useRef({ isRunning, startSession, stopSession });
+  useEffect(() => { sessionRef.current = { isRunning, startSession, stopSession }; });
+  const prevOnlineRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (voltageLoading || voltage === null) return;
+    const was = prevOnlineRef.current;
+    prevOnlineRef.current = isOnline;
+    const { isRunning: r, startSession: start, stopSession: stop } = sessionRef.current;
+    if (was === null) {
+      if (isOnline && !r) start();
+      else if (!isOnline && r) stop();
+    } else if (isOnline && !was && !r) {
+      start();
+    } else if (!isOnline && was && r) {
+      stop();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, voltageLoading]);
+
   const ownerMeta = loadingOwner ? null : {
     name: ownerName,
     phone: ownerPhone,
@@ -179,66 +190,15 @@ export default function ControlRoomPage() {
     totalHours,
     totalOperators: operatorsCount,
     thingspeakChannel,
-    isOnline: isRunning,
+    isOnline,
   };
 
   const time = formatTime(elapsedSeconds);
 
-  // Hold-to-toggle logic (2 seconds)
-  const HOLD_DURATION = 2000;
-  const [holdProgress, setHoldProgress] = useState(0);
-  const [isHolding, setIsHolding] = useState(false);
-  const holdStartRef = useRef<number | null>(null);
-  const holdRafRef = useRef<number | null>(null);
-  const holdCompletedRef = useRef(false);
-
-  const animateHold = useCallback(() => {
-    if (!holdStartRef.current) return;
-    const elapsed = Date.now() - holdStartRef.current;
-    const progress = Math.min(elapsed / HOLD_DURATION, 1);
-    setHoldProgress(progress);
-
-    if (progress >= 1 && !holdCompletedRef.current) {
-      holdCompletedRef.current = true;
-      if (isRunning) {
-        stopSession();
-      } else {
-        startSession();
-      }
-      // Vibrate if supported
-      if (navigator.vibrate) navigator.vibrate(100);
-      cancelHold();
-      return;
-    }
-
-    holdRafRef.current = requestAnimationFrame(animateHold);
-  }, [isRunning, startSession, stopSession]);
-
-  const startHold = useCallback(() => {
-    holdStartRef.current = Date.now();
-    holdCompletedRef.current = false;
-    setIsHolding(true);
-    holdRafRef.current = requestAnimationFrame(animateHold);
-  }, [animateHold]);
-
-  const cancelHold = useCallback(() => {
-    holdStartRef.current = null;
-    setIsHolding(false);
-    setHoldProgress(0);
-    if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current);
-  }, []);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current);
-    };
-  }, []);
-
   // Simulated load & fuel values
-  const estimatedLoad = isRunning ? 68 + Math.sin(elapsedSeconds / 30) * 8 : 0;
+  const estimatedLoad = isOnline ? 68 + Math.sin(elapsedSeconds / 30) * 8 : 0;
   const fuelQuotaTotal = 2000; // liters monthly
-  const fuelConsumed = isRunning ? Math.min(elapsedSeconds * 0.012, fuelQuotaTotal) : 0;
+  const fuelConsumed = isOnline ? Math.min(elapsedSeconds * 0.012, fuelQuotaTotal) : 0;
   const fuelRemaining = fuelQuotaTotal - fuelConsumed;
   const fuelPct = fuelRemaining / fuelQuotaTotal;
 
@@ -359,11 +319,11 @@ export default function ControlRoomPage() {
             className="glass-card p-6 text-center"
           >
             <div className="flex items-center justify-center gap-2 mb-3">
-              <Timer className="w-4 h-4" style={{ color: isRunning ? '#10b981' : 'var(--text-4)' }} />
+              <Timer className="w-4 h-4" style={{ color: isOnline ? '#10b981' : 'var(--text-4)' }} />
               <span className="text-xs font-medium" style={{ color: 'var(--text-4)' }}>
                 العداد الأساسي
               </span>
-              {isRunning && (
+              {isOnline && (
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-blink block" />
                   <span className="text-[10px] text-emerald-400 font-medium">مباشر</span>
@@ -376,7 +336,7 @@ export default function ControlRoomPage() {
                   {i > 0 && (
                     <span
                       className="text-3xl font-bold mx-1"
-                      style={{ color: isRunning ? '#10b981' : 'var(--text-5)', opacity: isRunning ? (elapsedSeconds % 2 === 0 ? 1 : 0.3) : 1 }}
+                      style={{ color: isOnline ? '#10b981' : 'var(--text-5)', opacity: isOnline ? (elapsedSeconds % 2 === 0 ? 1 : 0.3) : 1 }}
                     >
                       :
                     </span>
@@ -384,8 +344,8 @@ export default function ControlRoomPage() {
                   <span
                     className="text-5xl sm:text-6xl font-bold tracking-wider tabular-nums"
                     style={{
-                      color: isRunning ? 'var(--text-1)' : 'var(--text-5)',
-                      textShadow: isRunning ? '0 0 20px rgba(16,185,129,0.3)' : 'none',
+                      color: isOnline ? 'var(--text-1)' : 'var(--text-5)',
+                      textShadow: isOnline ? '0 0 20px rgba(16,185,129,0.3)' : 'none',
                       fontVariantNumeric: 'tabular-nums',
                       minWidth: '2.5ch',
                       display: 'inline-block',
@@ -397,80 +357,93 @@ export default function ControlRoomPage() {
               ))}
             </div>
             <p className="text-[10px] mt-2" style={{ color: 'var(--text-5)' }}>
-              {isRunning ? 'وقت التشغيل الحالي' : 'المولد متوقف'}
+              {isOnline ? 'وقت التشغيل الحالي' : 'المولد متوقف'}
             </p>
           </motion.div>
 
-          {/* ── Master Switch ── */}
+          {/* ── Live Generator Status ── */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 20 }}
-            className="flex flex-col items-center py-4"
+            className="glass-card p-5"
           >
-            <p className="text-xs mb-4 font-medium" style={{ color: 'var(--text-4)' }}>
-              {isRunning ? 'اضغط مطولاً لإيقاف المحرك' : 'اضغط مطولاً لتشغيل المحرك'}
-            </p>
-
-            <div className="relative w-40 h-40 flex items-center justify-center">
-              {/* Pulse rings when running */}
-              {isRunning && <PulseRings />}
-
-              {/* Hold progress ring */}
-              <HoldProgress progress={holdProgress} isRunning={isRunning} />
-
-              {/* Main button */}
-              <motion.button
-                onPointerDown={startHold}
-                onPointerUp={cancelHold}
-                onPointerLeave={cancelHold}
-                onContextMenu={(e) => e.preventDefault()}
-                whileTap={{ scale: 0.95 }}
-                className="relative z-10 w-[120px] h-[120px] rounded-full flex flex-col items-center justify-center gap-1.5 transition-all select-none"
-                style={{
-                  background: isRunning
-                    ? 'radial-gradient(circle, rgba(16,185,129,0.25), rgba(16,185,129,0.08))'
-                    : 'radial-gradient(circle, rgba(107,114,128,0.15), rgba(107,114,128,0.05))',
-                  border: `3px solid ${isRunning ? 'rgba(16,185,129,0.5)' : 'rgba(107,114,128,0.3)'}`,
-                  boxShadow: isRunning
-                    ? '0 0 40px rgba(16,185,129,0.25), inset 0 0 30px rgba(16,185,129,0.1)'
-                    : '0 0 20px rgba(0,0,0,0.2), inset 0 0 15px rgba(0,0,0,0.1)',
-                  cursor: 'pointer',
-                  touchAction: 'manipulation',
-                  WebkitUserSelect: 'none',
-                  userSelect: 'none',
-                }}
-              >
-                <Power
-                  className="w-10 h-10 transition-colors"
-                  style={{
-                    color: isRunning ? '#10b981' : 'var(--text-5)',
-                    filter: isRunning ? 'drop-shadow(0 0 10px rgba(16,185,129,0.6))' : 'none',
-                  }}
-                />
-                <span
-                  className="text-[10px] font-bold tracking-wide"
-                  style={{ color: isRunning ? '#10b981' : 'var(--text-5)' }}
-                >
-                  {isRunning ? 'قيد التشغيل' : 'إيقاف المحرك'}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                {isOnline
+                  ? <Wifi className="w-4 h-4 text-emerald-400" />
+                  : <WifiOff className="w-4 h-4" style={{ color: 'var(--text-5)' }} />}
+                <span className="text-xs font-medium" style={{ color: 'var(--text-4)' }}>
+                  حالة المولد — ThingSpeak
                 </span>
-              </motion.button>
+              </div>
+              <button
+                onClick={() => setVoltageRefreshTick((n) => n + 1)}
+                className="p-1.5 rounded-lg transition-all"
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-5)' }}
+                title="تحديث"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${voltageLoading ? 'animate-spin' : ''}`} />
+              </button>
             </div>
 
-            {/* Hold instruction */}
-            <AnimatePresence>
-              {isHolding && (
-                <motion.p
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 5 }}
-                  className="text-xs mt-3 font-medium"
-                  style={{ color: isRunning ? '#ef4444' : '#10b981' }}
+            <div className="flex items-stretch justify-center gap-5 py-1">
+              {/* Voltage */}
+              <div className="text-center flex-1">
+                <div
+                  className="text-5xl sm:text-6xl font-mono font-bold tabular-nums"
+                  dir="ltr"
+                  style={{
+                    color: isOnline ? '#10b981' : 'var(--text-5)',
+                    textShadow: isOnline ? '0 0 24px rgba(16,185,129,0.35)' : 'none',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
                 >
-                  {isRunning ? 'استمر بالضغط للإيقاف...' : 'استمر بالضغط للتشغيل...'} ({Math.round(holdProgress * 100)}%)
-                </motion.p>
-              )}
-            </AnimatePresence>
+                  {voltageLoading ? '...' : voltage !== null ? Math.round(voltage) : '---'}
+                </div>
+                <p className="text-xs mt-1.5" style={{ color: 'var(--text-5)' }}>فولت (V)</p>
+              </div>
+
+              <div className="w-px self-stretch" style={{ background: 'var(--border-subtle)' }} />
+
+              {/* Status orb */}
+              <div className="text-center flex-1 flex flex-col items-center justify-center gap-2">
+                <div className="relative inline-flex">
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center"
+                    style={{
+                      background: isOnline
+                        ? 'radial-gradient(circle, rgba(16,185,129,0.25), rgba(16,185,129,0.05))'
+                        : 'rgba(107,114,128,0.1)',
+                      border: `2px solid ${isOnline ? 'rgba(16,185,129,0.5)' : 'rgba(107,114,128,0.3)'}`,
+                      boxShadow: isOnline ? '0 0 20px rgba(16,185,129,0.2)' : 'none',
+                    }}
+                  >
+                    {isOnline
+                      ? <Wifi className="w-6 h-6 text-emerald-400" />
+                      : <WifiOff className="w-6 h-6" style={{ color: 'var(--text-5)' }} />}
+                  </div>
+                  {isOnline && (
+                    <span
+                      className="absolute inset-0 rounded-full animate-ping"
+                      style={{ background: 'rgba(16,185,129,0.12)', border: '2px solid rgba(16,185,129,0.25)' }}
+                    />
+                  )}
+                </div>
+                <p className="text-sm font-bold" style={{ color: isOnline ? '#10b981' : '#6b7280' }}>
+                  {voltageLoading ? '...' : isOnline ? 'نشط' : 'متوقف'}
+                </p>
+                {lastVoltageTime && (
+                  <p className="text-[10px]" style={{ color: 'var(--text-5)' }}>{lastVoltageTime}</p>
+                )}
+              </div>
+            </div>
+
+            {thingspeakChannel && (
+              <p className="text-center text-[10px] mt-3" style={{ color: 'var(--text-5)' }}>
+                CH-{thingspeakChannel} · تحديث تلقائي كل 30 ثانية
+              </p>
+            )}
           </motion.div>
 
           {/* ── Telemetry Bento Grid ── */}
@@ -497,8 +470,8 @@ export default function ControlRoomPage() {
                   className="text-4xl font-bold tabular-nums font-mono"
                   dir="ltr"
                   style={{
-                    color: isRunning ? '#fbbf24' : 'var(--text-5)',
-                    textShadow: isRunning ? '0 0 15px rgba(251,191,36,0.3)' : 'none',
+                    color: isOnline ? '#fbbf24' : 'var(--text-5)',
+                    textShadow: isOnline ? '0 0 15px rgba(251,191,36,0.3)' : 'none',
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
@@ -508,7 +481,7 @@ export default function ControlRoomPage() {
                   دينار عراقي
                 </span>
               </div>
-              {isRunning && (
+              {isOnline && (
                 <div className="mt-3 flex items-center gap-4 text-[10px]" style={{ color: 'var(--text-5)' }}>
                   <span>القيمة بالدقيقة: {(RATE_PER_HOUR / 60).toFixed(2)} د.ع</span>
                   <span>·</span>
@@ -531,12 +504,12 @@ export default function ControlRoomPage() {
                 </span>
               </div>
               <ArcGauge
-                pct={isRunning ? estimatedLoad / 100 : 0}
+                pct={isOnline ? estimatedLoad / 100 : 0}
                 color={estimatedLoad > 85 ? '#ef4444' : estimatedLoad > 60 ? '#3b82f6' : '#10b981'}
                 label="حمل المحرك"
-                value={isRunning ? `${Math.round(estimatedLoad)}%` : '—'}
+                value={isOnline ? `${Math.round(estimatedLoad)}%` : '—'}
               />
-              {isRunning && (
+              {isOnline && (
                 <div className="text-center">
                   <p className="text-[10px]" style={{ color: 'var(--text-5)' }}>
                     {Math.round(estimatedLoad * genPower / 100)} / {genPower} KW
@@ -595,7 +568,7 @@ export default function ControlRoomPage() {
               className="glass-card p-4 col-span-2"
             >
               <div className="flex items-center gap-2 mb-3">
-                <Activity className="w-4 h-4" style={{ color: isRunning ? '#10b981' : 'var(--text-5)' }} />
+                <Activity className="w-4 h-4" style={{ color: isOnline ? '#10b981' : 'var(--text-5)' }} />
                 <span className="text-xs font-medium" style={{ color: 'var(--text-4)' }}>ملخص الجلسة</span>
               </div>
               <div className="grid grid-cols-3 gap-3">
@@ -623,7 +596,7 @@ export default function ControlRoomPage() {
                     <p
                       className="text-lg font-bold tabular-nums font-mono"
                       dir="ltr"
-                      style={{ color: isRunning ? item.color : 'var(--text-5)', fontVariantNumeric: 'tabular-nums' }}
+                      style={{ color: isOnline ? item.color : 'var(--text-5)', fontVariantNumeric: 'tabular-nums' }}
                     >
                       {item.value}
                     </p>

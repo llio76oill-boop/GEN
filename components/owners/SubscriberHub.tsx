@@ -792,51 +792,145 @@ function SubCard({ sub, meta, onCardClick }: { sub: SubRow; meta: OwnerMeta; onC
     ? [...sub.bills].sort((a, b) => b.month_label.localeCompare(a.month_label))[0]
     : null;
   const billMeta = latestBill ? billStatusMeta(latestBill.status as 'pending' | 'paid' | 'overdue') : null;
+  const statusColor = sub.active ? '#10b981' : '#6b7280';
+  const initial = sub.full_name.trim().charAt(0) || '؟';
+  const waNum = (sub.whatsapp ?? sub.phone ?? '').replace(/\D/g, '');
 
   return (
     <div
-      className="flex flex-wrap items-center gap-3 p-4 rounded-2xl transition-all"
-      style={{ background: 'var(--surface)', border: '1px solid var(--border-subtle)' }}
+      className="rounded-2xl overflow-hidden transition-all active:scale-[0.99]"
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border-subtle)',
+        boxShadow: sub.active ? '0 2px 14px rgba(16,185,129,0.07)' : 'none',
+      }}
     >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-mono font-bold" style={{ color: '#a78bfa' }} dir="ltr">{sub.sub_code}</span>
-          <span
-            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-            style={{ background: sub.active ? '#10b981' : '#6b7280', boxShadow: sub.active ? '0 0 5px #10b981' : 'none' }}
-          />
+      {/* Status stripe */}
+      <div
+        className="h-[3px]"
+        style={{ background: sub.active ? 'linear-gradient(to left, #10b981, #059669)' : 'rgba(107,114,128,0.25)' }}
+      />
+
+      <div className="p-4">
+        {/* Header: avatar + name + badges */}
+        <div className="flex items-start gap-3">
+          {/* Avatar */}
+          <div
+            className="w-11 h-11 rounded-2xl flex items-center justify-center text-base font-bold flex-shrink-0"
+            style={{
+              background: `${statusColor}18`,
+              border: `1.5px solid ${statusColor}30`,
+              color: statusColor,
+              fontFamily: 'var(--font-ibm-arabic)',
+            }}
+          >
+            {initial}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            {/* Sub code + status */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span
+                className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-lg"
+                dir="ltr"
+                style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.2)' }}
+              >
+                {sub.sub_code}
+              </span>
+              <span
+                className="text-[10px] px-2 py-0.5 rounded-full"
+                style={{
+                  background: sub.active ? 'rgba(16,185,129,0.1)' : 'rgba(107,114,128,0.1)',
+                  color: sub.active ? '#10b981' : '#9ca3af',
+                  fontFamily: 'var(--font-ibm-arabic)',
+                }}
+              >
+                {sub.active ? '● نشط' : '○ معلق'}
+              </span>
+            </div>
+            {/* Full name */}
+            <p className="text-sm font-bold mt-1 truncate" style={{ color: 'var(--text-1)', fontFamily: 'var(--font-ibm-arabic)' }}>
+              {sub.full_name}
+            </p>
+          </div>
         </div>
-        <p className="text-sm font-medium mt-0.5" style={{ color: 'var(--text-1)', fontFamily: 'var(--font-ibm-arabic)' }}>{sub.full_name}</p>
-        <div className="flex items-center gap-3 mt-1 flex-wrap">
-          <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-5)' }}>
-            <Zap className="w-3 h-3" />{sub.amps} A
+
+        {/* Info pills */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          <span
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg"
+            style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6' }}
+          >
+            <Zap className="w-3 h-3" />
+            {sub.amps} A
           </span>
-          <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
-            {sub.sub_type === 'residential' ? <><Home className="w-3 h-3" />سكني</> : <><Briefcase className="w-3 h-3" />تجاري</>}
+          <span
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg"
+            style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}
+          >
+            {sub.sub_type === 'residential'
+              ? <><Home className="w-3 h-3" />سكني</>
+              : <><Briefcase className="w-3 h-3" />تجاري</>}
           </span>
           {billMeta && latestBill && (
-            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: billMeta.bg, color: billMeta.color, fontFamily: 'var(--font-ibm-arabic)' }}>
+            <span
+              className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg font-medium"
+              style={{
+                background: billMeta.bg,
+                color: billMeta.color,
+                border: `1px solid ${billMeta.color}25`,
+                fontFamily: 'var(--font-ibm-arabic)',
+              }}
+            >
               {billMeta.label} · {formatIQD(latestBill.total_iqd)}
             </span>
           )}
+          {sub.address && (
+            <span
+              className="text-[10px] px-2 py-1 rounded-lg truncate max-w-[160px]"
+              style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}
+            >
+              {sub.address}
+            </span>
+          )}
         </div>
-      </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {sub.phone && (
-          <a href={`tel:${sub.phone.replace(/\s/g, '')}`}
-            className="p-2 rounded-xl transition-all"
-            style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.15)' }}>
-            <Phone className="w-3.5 h-3.5" />
-          </a>
-        )}
-        <button
-          onClick={() => onCardClick(sub)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all"
-          style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.2)', fontFamily: 'var(--font-ibm-arabic)' }}
+
+        {/* Action buttons */}
+        <div
+          className="flex items-center gap-2 mt-3 pt-3"
+          style={{ borderTop: '1px solid var(--border-subtle)' }}
         >
-          <Hash className="w-3 h-3" />
-          اظهر البطاقة
-        </button>
+          {sub.phone && (
+            <a
+              href={`tel:${sub.phone.replace(/\s/g, '')}`}
+              className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-xl text-xs font-medium transition-all"
+              style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', fontFamily: 'var(--font-ibm-arabic)' }}
+            >
+              <Phone className="w-3.5 h-3.5" />
+              اتصال
+            </a>
+          )}
+          {waNum && (
+            <a
+              href={`https://wa.me/${waNum}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-xl text-xs font-medium transition-all"
+              style={{ background: 'rgba(37,211,102,0.1)', color: '#25D366', border: '1px solid rgba(37,211,102,0.2)', fontFamily: 'var(--font-ibm-arabic)' }}
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              واتساب
+            </a>
+          )}
+          <button
+            onClick={() => onCardClick(sub)}
+            className="flex items-center justify-center gap-1.5 flex-1 py-2 rounded-xl text-xs font-medium transition-all"
+            style={{ background: 'rgba(167,139,250,0.12)', color: '#a78bfa', border: '1px solid rgba(167,139,250,0.25)', fontFamily: 'var(--font-ibm-arabic)' }}
+          >
+            <Hash className="w-3.5 h-3.5" />
+            البطاقة
+          </button>
+        </div>
       </div>
     </div>
   );

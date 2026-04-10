@@ -342,9 +342,12 @@ function OwnerCard({ owner }: { owner: OwnerRow }) {
   return (
     <motion.div layout className="glass-card overflow-hidden">
       {/* Owner header */}
-      <button
-        className="w-full flex items-center gap-4 p-5 text-start"
+      <div
+        role="button"
+        tabIndex={0}
+        className="w-full flex items-center gap-4 p-5 text-start cursor-pointer"
         onClick={() => setExpanded((v) => !v)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setExpanded((v) => !v); }}
       >
         <div
           className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/30 to-blue-500/30 border border-purple-400/20 flex items-center justify-center text-sm font-bold flex-shrink-0"
@@ -408,7 +411,7 @@ function OwnerCard({ owner }: { owner: OwnerRow }) {
             ? <ChevronUp className="w-4 h-4" style={{ color: 'var(--text-5)' }} />
             : <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-5)' }} />}
         </div>
-      </button>
+      </div>
 
       {/* Subscribers panel */}
       <AnimatePresence initial={false}>
