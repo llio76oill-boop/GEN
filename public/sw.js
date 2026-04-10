@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spgms-v2';
+const CACHE_NAME = 'spgms-v3';
 const OFFLINE_URL = '/offline.html';
 
 const APP_SHELL = [
@@ -78,13 +78,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ── Static assets (JS, CSS, fonts, images) → cache-first ──
+  // ── Next.js JS chunks → network-first (chunks change on every build) ──
+  if (
+    request.url.includes('/_next/static/chunks/') ||
+    request.url.includes('/_next/static/css/')
+  ) {
+    event.respondWith(
+      fetch(request).then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // ── Other static assets (fonts, images, icons) → cache-first ──
   if (
     request.destination === 'style' ||
-    request.destination === 'script' ||
     request.destination === 'font' ||
     request.destination === 'image' ||
-    request.url.match(/\.(js|css|woff2?|ttf|svg|png|jpg|ico)(\?|$)/)
+    request.url.match(/\.(css|woff2?|ttf|svg|png|jpg|ico)(\?|$)/)
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
