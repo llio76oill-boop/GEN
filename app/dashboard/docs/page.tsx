@@ -9,6 +9,17 @@ interface Entry {
 
 const CHANGELOG: Entry[] = [
   {
+    version: 'v2.2.0', date: 'أبريل 2026',
+    title: 'اكتشاف القنوات التلقائي — مزامنة ThingSpeak',
+    items: [
+      { type: 'feature', text: 'Supabase Edge Function جديدة: sync-thingspeak-channels — تجلب كل القنوات بـ User API Key وتزامنها مع owned_generators' },
+      { type: 'feature', text: 'منطق upsert: INSERT للقنوات الجديدة، UPDATE للقنوات الموجودة (الاسم + read key)' },
+      { type: 'feature', text: 'استخراج تلقائي لـ Read API Key من مصفوفة api_keys في استجابة ThingSpeak' },
+      { type: 'feature', text: 'زر "مزامنة مع ThingSpeak" في صفحة المولدات مع حالات تحميل وإشعار toast' },
+      { type: 'enhance', text: 'THINGSPEAK_USER_API محفوظ في Secrets — لا يُكشف أبداً في الواجهة الأمامية' },
+    ],
+  },
+  {
     version: 'v2.1.0', date: 'أبريل 2026',
     title: 'غرفة التحكم الكاملة + مركز المشتركين',
     items: [
@@ -110,7 +121,7 @@ export default function DocsPage() {
       {/* System info cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { Icon: LayoutDashboard, label: 'الإصدار',     value: 'v2.1.0'   },
+          { Icon: LayoutDashboard, label: 'الإصدار',     value: 'v2.2.0'   },
           { Icon: Zap,             label: 'المولدات',    value: '3,000'    },
           { Icon: Gauge,           label: 'نسبة التشغيل', value: '87.3%'  },
           { Icon: WrenchIcon,      label: 'الأعطال',      value: '62 نشط'  },

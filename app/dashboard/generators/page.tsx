@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Search, Plus, Filter } from 'lucide-react';
 import { useGenerators, STATUS_LABEL, STATUS_COLOR, STATUS_BG, type GeneratorStatus } from '@/hooks/useGenerators';
+import SyncThingSpeakButton from '@/components/dashboard/SyncThingSpeakButton';
 
 const PAGE_SIZE = 20;
 const ALL_STATUSES: GeneratorStatus[] = ['online-grid', 'online-gen', 'fault', 'offline'];
@@ -53,13 +54,16 @@ export default function GeneratorsPage() {
             الرمادي — محافظة الأنبار • {generators.length} مولد مسجل
           </p>
         </div>
-        <button
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[var(--text-1)] transition-colors"
-          style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', fontFamily: 'var(--font-ibm-arabic)' }}
-        >
-          <Plus className="w-4 h-4" />
-          إضافة مولد
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <SyncThingSpeakButton onSynced={() => window.location.reload()} />
+          <button
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[var(--text-1)] transition-colors"
+            style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', fontFamily: 'var(--font-ibm-arabic)' }}
+          >
+            <Plus className="w-4 h-4" />
+            إضافة مولد
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
