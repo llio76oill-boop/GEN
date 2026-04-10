@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Zap, Activity, Clock, BarChart3 } from 'lucide-react';
-import { GENERATORS, RAMADI_AREAS } from '@/data/generators';
+
 
 type Range = '24h' | '7d' | '30d';
 
@@ -43,14 +43,8 @@ function MiniChart({ data, color }: { data: number[]; color: string }) {
   );
 }
 
-const areaStats = RAMADI_AREAS.map((a) => {
-  const gens = GENERATORS.filter((g) => g.area === a.name);
-  return {
-    name: a.name,
-    total: gens.length,
-    online: gens.filter((g) => g.status === 'online-grid' || g.status === 'online-gen').length,
-  };
-}).sort((a, b) => b.total - a.total);
+// Area stats will be loaded from DB — empty until real data arrives
+const areaStats: { name: string; total: number; online: number }[] = [];
 
 export default function AnalyticsPage() {
   const [range, setRange] = useState<Range>('24h');
@@ -89,7 +83,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { icon: Zap,      label: 'إجمالي الإنتاج',   value: `${latest} MW`,  color: '#10b981', trend: pct },
-          { icon: Activity, label: 'المولدات النشطة',   value: `${GENERATORS.filter(g=>g.status!=='offline').length}`, color: '#3b82f6', trend: 2.1 },
+          { icon: Activity, label: 'المولدات النشطة',   value: '—', color: '#3b82f6', trend: 2.1 },
           { icon: Clock,    label: 'الكفاءة التشغيلية', value: '91.4%',          color: '#a855f7', trend: 0.8 },
           { icon: BarChart3, label: 'ذروة اليوم',       value: `${Math.max(...data)} MW`, color: '#f97316', trend: -1.2 },
         ].map((k) => {

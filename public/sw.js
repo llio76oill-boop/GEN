@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spgms-v3';
+const CACHE_NAME = 'spgms-v4';
 const OFFLINE_URL = '/offline.html';
 
 const APP_SHELL = [

@@ -20,7 +20,7 @@ import {
   Moon,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { RAMADI_AREAS } from '@/data/generators';
+
 import { supabase } from '@/lib/supabase';
 
 const LocationPicker = dynamic(() => import('@/components/owners/LocationPicker'), { ssr: false });

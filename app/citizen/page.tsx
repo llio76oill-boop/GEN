@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Search, Clock, WifiOff, AlertTriangle, Send, X, CheckCircle2, ExternalLink, ReceiptText, DollarSign } from 'lucide-react';
 import Link from 'next/link';
-import { GENERATORS, STATUS_COLOR, STATUS_LABEL, STATUS_BG } from '@/data/generators';
+import { STATUS_COLOR, STATUS_LABEL, STATUS_BG, type GeneratorStatus } from '@/data/generators';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { obfuscateArabicName, formatIQD, billStatusMeta } from '@/lib/obfuscate';
@@ -388,14 +388,30 @@ export default function CitizenPortal() {
   const [reportSent, setReportSent] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Look up generator — accepts G-XXXX or plain number
+  // Look up generator from Supabase — accepts G-XXXX or plain number
   const normalized = query.trim().toUpperCase().startsWith('G-')
     ? query.trim().toUpperCase()
     : `G-${pad(parseInt(query) || 0)}`;
 
-  const gen = submitted
-    ? GENERATORS.find((g) => `G-${pad(g.id)}` === normalized)
-    : undefined;
+  const [gen, setGen] = useState<{ id: number; area: string; status: GeneratorStatus; power: number; hours: number } | null>(null);
+  const [genLoading, setGenLoading] = useState(false);
+
+  useEffect(() => {
+    if (!submitted) return;
+    const numId = parseInt(normalized.replace('G-', ''));
+    if (!numId) return;
+    setGenLoading(true);
+    supabase
+      .from('generators')
+      .select('id, area, status, power, hours')
+      .eq('id', numId)
+      .neq('is_mock', true)
+      .maybeSingle()
+      .then(({ data }) => {
+        setGen(data as typeof gen);
+        setGenLoading(false);
+      });
+  }, [submitted, normalized]);
 
   const downtime = gen ? YEAR_HOURS - gen.hours : 0;
   const opHours  = gen ? gen.hours : 0;
