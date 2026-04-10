@@ -50,25 +50,14 @@ function statusLabel(s: LiveRow['status']) {
   return s === 'online' ? 'متصل' : s === 'fault' ? 'عطل' : 'منقطع';
 }
 function voltageToStatus(v: number): TsGen['status'] {
-  if (v < 170 || v > 270) return 'fault';
-  if (v === 0) return 'offline';
+  if (v === 0) return 'offline';           // 0V = no signal = offline
+  if (v < 170 || v > 270) return 'fault';  // out of safe range = fault
   return 'online';
 }
 
 // ─── Animated number ────────────────────────────────────────────────────────
 function AnimNum({ value, unit = '' }: { value: number; unit?: string }) {
-  const [display, setDisplay] = useState(0);
-  useEffect(() => {
-    let start = 0;
-    const step = value / 30;
-    const id = setInterval(() => {
-      start += step;
-      if (start >= value) { setDisplay(value); clearInterval(id); }
-      else setDisplay(Math.round(start));
-    }, 20);
-    return () => clearInterval(id);
-  }, [value]);
-  return <>{display.toLocaleString()}{unit}</>;
+  return <>{value.toLocaleString('en-US')}{unit}</>;
 }
 
 // ─── Pulse ring around icon ─────────────────────────────────────────────────
@@ -685,7 +674,8 @@ export default function ThingsBoardPage() {
         .limit(50);
       if (error) { setHealth('error'); return; }
       setRows(data ?? []);
-      setHealth(data && data.length > 0 ? 'ok' : 'degraded');
+      // health is set after tsGens merge — updated below in render
+      setHealth(data && data.length > 0 ? 'ok' : 'checking');
       setLastRefresh(new Date());
     } catch {
       setHealth('error');
@@ -760,13 +750,30 @@ export default function ThingsBoardPage() {
     return () => clearInterval(id);
   }, [autoRefresh, fetchTsGens]);
 
-  // derived stats
-  const total   = rows.length;
-  const online  = rows.filter((r) => r.status === 'online').length;
-  const fault   = rows.filter((r) => r.status === 'fault').length;
-  const offline = rows.filter((r) => r.status === 'offline').length;
-  const avgLoad = total ? Math.round(rows.reduce((s, r) => s + r.current_load, 0) / total) : 0;
-  const avgVolt = total ? Math.round(rows.reduce((s, r) => s + r.voltage, 0) / total) : 0;
+  // derived stats — merge TB rows + ThingSpeak generators
+  const tsOnline  = tsGens.filter((g) => g.status === 'online').length;
+  const tsFault   = tsGens.filter((g) => g.status === 'fault').length;
+  const tsOffline = tsGens.filter((g) => g.status === 'offline').length;
+  const tsVolts   = tsGens.map((g) => g.voltage).filter((v): v is number => v !== null && v > 0);
+
+  const total   = rows.length + tsGens.length;
+  const online  = rows.filter((r) => r.status === 'online').length  + tsOnline;
+  const fault   = rows.filter((r) => r.status === 'fault').length   + tsFault;
+  const offline = rows.filter((r) => r.status === 'offline').length + tsOffline;
+  const avgLoad = rows.length ? Math.round(rows.reduce((s, r) => s + r.current_load, 0) / rows.length) : 0;
+
+  const allVolts = [
+    ...rows.map((r) => r.voltage),
+    ...tsVolts,
+  ];
+  const avgVolt = allVolts.length ? Math.round(allVolts.reduce((s, v) => s + v, 0) / allVolts.length) : 0;
+
+  // Sync health badge with combined data
+  const derivedHealth: HealthStatus =
+    health === 'error'    ? 'error' :
+    total > 0             ? 'ok' :
+    tsLoading || loading  ? 'checking' :
+                            'degraded';
 
   const TABS = [
     { key: 'telemetry',    label: 'التلغراف الحي',     icon: Activity       },
@@ -804,7 +811,7 @@ export default function ThingsBoardPage() {
 
         {/* Controls */}
         <div className="flex items-center gap-3">
-          <HealthBadge status={health} />
+          <HealthBadge status={derivedHealth} />
           <span className="text-xs" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
             آخر تحديث: {lastRefresh.toLocaleTimeString('ar-IQ')}
           </span>
