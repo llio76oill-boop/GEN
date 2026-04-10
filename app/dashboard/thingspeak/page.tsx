@@ -605,6 +605,7 @@ export default function ThingSpeakPage() {
         {view === 'fleet' && (
           <div className="flex items-center gap-2">
             <span
+              suppressHydrationWarning
               className="flex items-center gap-1.5 text-xs"
               style={{
                 color: tsError ? '#ef4444' : '#10b981',

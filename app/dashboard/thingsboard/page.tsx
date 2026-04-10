@@ -852,7 +852,7 @@ export default function ThingsBoardPage() {
         {/* Controls */}
         <div className="flex items-center gap-3">
           <HealthBadge status={derivedHealth} />
-          <span className="text-xs" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
+          <span suppressHydrationWarning className="text-xs" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
             آخر تحديث: {lastRefresh.toLocaleTimeString('ar-IQ')}
           </span>
           <button
