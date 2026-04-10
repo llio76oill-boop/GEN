@@ -583,7 +583,7 @@ export default function BillingHubPage() {
                                 )}
                                 {/* Checkout link */}
                                 <a
-                                  href={`/dashboard/billing/checkout?sub=${encodeURIComponent(s.sub_code)}`}
+                                  href={`/citizen/checkout?sub=${encodeURIComponent(s.sub_code)}`}
                                   className="text-[10px] px-2.5 py-1 rounded-lg flex-shrink-0 transition-all"
                                   style={{
                                     background: 'rgba(16,185,129,0.08)',
