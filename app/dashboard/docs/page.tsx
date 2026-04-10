@@ -9,8 +9,31 @@ interface Entry {
 
 const CHANGELOG: Entry[] = [
   {
-    version: 'v2.0.27', date: 'مايو 2026',
-    title: 'التحديث الكامل للوحة التحكم',
+    version: 'v2.1.0', date: 'أبريل 2026',
+    title: 'غرفة التحكم الكاملة + مركز المشتركين',
+    items: [
+      { type: 'feature', text: 'قراءة حالة المولد مباشرةً من ThingSpeak (جهد حي كل 30 ثانية) — لا تشغيل يدوي' },
+      { type: 'feature', text: 'مركز المشتركين: تسجيل جديد، بطاقة رقمية QR، مشاركة واتساب بمعلومات الاشتراك' },
+      { type: 'feature', text: 'إضافة مشغلين بالمناوبات من غرفة التحكم مباشرة' },
+      { type: 'feature', text: 'تصدير المشتركين CSV + شريط حالة مباشر (ساعات التشغيل، المشغلون، القناة)' },
+      { type: 'enhance', text: 'بطاقات المشتركين: شريط حالة ملون، avatar، أزرار اتصال/واتساب/بطاقة' },
+      { type: 'feature', text: 'شريط تنقل الجوال: 4 تبويبات رئيسية + درج "المزيد" يعرض جميع الأقسام (شبكة 3 أعمدة)' },
+      { type: 'fix',     text: 'إصلاح خطأ hydration — button داخل button في صفحة أصحاب المولدات' },
+    ],
+  },
+  {
+    version: 'v2.0.30', date: 'أبريل 2026',
+    title: 'ربط البيانات الحقيقية وإصلاحات البنية',
+    items: [
+      { type: 'feature', text: 'صفحة أصحاب المولدات: جلب مباشر من Supabase مع لوحة فواتير المشتركين' },
+      { type: 'fix',     text: 'generateStaticParams غير متزامن لصفحات ملفات المولدات' },
+      { type: 'fix',     text: 'فلتر is_mock=false في مركز بيانات ThingsBoard + مفتاح React صحيح' },
+      { type: 'feature', text: 'زر "عرض الملف" مع التنقل لصفحة تفصيلية لكل مولد' },
+    ],
+  },
+  {
+    version: 'v2.0.27', date: 'أبريل 2026',
+    title: 'ربط بيانات المشتركين الحقيقيين',
     items: [
       { type: 'feature', text: 'خريطة تفاعلية حقيقية مع موقع مدينة الرمادي — الأنبار' },
       { type: 'feature', text: 'صفحات مخصصة لإدارة الأعطال والمولدات والتحليلات' },
@@ -87,7 +110,7 @@ export default function DocsPage() {
       {/* System info cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { Icon: LayoutDashboard, label: 'الإصدار',     value: 'v2.0.27'  },
+          { Icon: LayoutDashboard, label: 'الإصدار',     value: 'v2.1.0'   },
           { Icon: Zap,             label: 'المولدات',    value: '3,000'    },
           { Icon: Gauge,           label: 'نسبة التشغيل', value: '87.3%'  },
           { Icon: WrenchIcon,      label: 'الأعطال',      value: '62 نشط'  },

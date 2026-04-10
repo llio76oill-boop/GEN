@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   devIndicators: false,
+  turbopack: {
+    root: __dirname,
+  },
 };
 
 export default nextConfig;
