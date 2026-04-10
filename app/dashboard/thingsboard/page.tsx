@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import LiveTelemetryBadge from '@/components/dashboard/LiveTelemetryBadge';
 import {
   Cpu, Wifi, WifiOff, Zap, AlertTriangle, CheckCircle2,
   RefreshCw, ArrowUpRight, Info, ServerCrash, Radio,
@@ -24,15 +25,16 @@ interface LiveRow {
 
 // ThingSpeak-sourced generator (bridges ThingSpeak → ThingsBoard view)
 interface TsGen {
-  id:       number;
-  code:     string;
-  area:     string;
-  channel:  string;
-  readKey:  string;
-  voltage:  number | null;
-  status:   'online' | 'offline' | 'fault';
-  lastSeen: string | null;
-  loading:  boolean;
+  id:        number;
+  code:      string;
+  area:      string;
+  channel:   string;
+  readKey:   string | null;
+  fieldsMap: Record<string, string> | null;
+  voltage:   number | null;
+  status:    'online' | 'offline' | 'fault';
+  lastSeen:  string | null;
+  loading:   boolean;
 }
 
 type HealthStatus = 'checking' | 'ok' | 'degraded' | 'error';
@@ -692,7 +694,7 @@ export default function ThingsBoardPage() {
     try {
       const { data: gens } = await supabase
         .from('owned_generators')
-        .select('id, code, area, thingspeak_channel_id, thingspeak_read_key')
+        .select('id, code, area, thingspeak_channel_id, thingspeak_read_key, thingspeak_fields_map')
         .not('thingspeak_channel_id', 'is', null)
         .neq('is_mock', true);
 
@@ -708,23 +710,25 @@ export default function ThingsBoardPage() {
             const feed = json.feeds?.[0];
             const v = feed?.field1 ? parseFloat(feed.field1) : null;
             return {
-              id:       g.id,
-              code:     g.code,
-              area:     g.area,
-              channel:  g.thingspeak_channel_id,
-              readKey:  g.thingspeak_read_key,
-              voltage:  v,
-              status:   v !== null ? voltageToStatus(v) : 'offline' as const,
-              lastSeen: feed?.created_at ?? null,
-              loading:  false,
+              id:        g.id,
+              code:      g.code,
+              area:      g.area,
+              channel:   g.thingspeak_channel_id,
+              readKey:   g.thingspeak_read_key,
+              fieldsMap: (g.thingspeak_fields_map as Record<string, string> | null) ?? null,
+              voltage:   v,
+              status:    v !== null ? voltageToStatus(v) : 'offline' as const,
+              lastSeen:  feed?.created_at ?? null,
+              loading:   false,
             } satisfies TsGen;
           } catch {
             return {
-              id:       g.id,
-              code:     g.code,
-              area:     g.area,
-              channel:  g.thingspeak_channel_id,
-              readKey:  g.thingspeak_read_key,
+              id:        g.id,
+              code:      g.code,
+              area:      g.area,
+              channel:   g.thingspeak_channel_id,
+              readKey:   g.thingspeak_read_key,
+              fieldsMap: (g.thingspeak_fields_map as Record<string, string> | null) ?? null,
               voltage:  null,
               status:   'offline' as const,
               lastSeen: null,
@@ -982,17 +986,6 @@ export default function ThingsBoardPage() {
                     {tsGens.map((g) => {
                       const sc = g.status === 'online' ? '#10b981' : g.status === 'fault' ? '#f59e0b' : '#6b7280';
                       const sl = g.status === 'online' ? 'متصل' : g.status === 'fault' ? 'عطل' : 'منقطع';
-                      const vLabel = g.voltage === null ? '—'
-                        : g.voltage < 180 ? 'منخفض جداً'
-                        : g.voltage < 210 ? 'منخفض'
-                        : g.voltage <= 240 ? 'طبيعي'
-                        : g.voltage <= 260 ? 'مرتفع'
-                        : 'مرتفع جداً';
-                      const vColor = g.voltage === null ? 'var(--text-5)'
-                        : g.voltage < 180 || g.voltage > 260 ? '#ef4444'
-                        : g.voltage < 210 ? '#f97316'
-                        : g.voltage <= 240 ? '#10b981'
-                        : '#f59e0b';
                       return (
                         <div key={g.id} className="px-5 py-4 flex items-center gap-4 flex-wrap hover:bg-white/[0.015] transition-colors">
                           {/* Status dot */}
@@ -1008,17 +1001,14 @@ export default function ThingsBoardPage() {
                                 style={{ background: `${sc}15`, color: sc, border: `1px solid ${sc}30`, fontFamily: 'var(--font-ibm-arabic)' }}>
                             {sl}
                           </span>
-                          {/* Voltage */}
-                          <div className="flex items-baseline gap-1.5 flex-shrink-0">
-                            <span className="text-xl font-bold tabular-nums font-mono" style={{ color: vColor }}>
-                              {g.voltage !== null ? g.voltage.toFixed(2) : '—'}
-                            </span>
-                            <span className="text-xs" style={{ color: 'var(--text-5)' }}>V</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-md ms-1"
-                                  style={{ background: `${vColor}12`, color: vColor, fontFamily: 'var(--font-ibm-arabic)' }}>
-                              {vLabel}
-                            </span>
-                          </div>
+                          {/* Live telemetry — independent per-row poll */}
+                          <LiveTelemetryBadge
+                            channelId={g.channel}
+                            readApiKey={g.readKey}
+                            fieldsMap={g.fieldsMap}
+                            compact
+                            pollMs={15_000}
+                          />
                           {/* Channel link */}
                           <a href={`https://thingspeak.com/channels/${g.channel}`}
                              target="_blank" rel="noopener noreferrer"
