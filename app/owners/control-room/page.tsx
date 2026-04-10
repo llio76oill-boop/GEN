@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSessionTimer, RATE_PER_HOUR } from '@/hooks/useSessionTimer';
 import { supabase } from '@/lib/supabase';
+import SubscriberHub from '@/components/owners/SubscriberHub';
 
 /* ── Formatting helpers ── */
 function formatTime(totalSeconds: number): { h: string; m: string; s: string } {
@@ -122,23 +123,39 @@ export default function ControlRoomPage() {
   // Fetch first registered generator from Supabase
   const [genCode, setGenCode] = useState('');
   const [ownerName, setOwnerName] = useState('');
+  const [ownerPhone, setOwnerPhone] = useState('');
   const [genArea, setGenArea] = useState('');
   const [genPower, setGenPower] = useState(380);
+  const [ownedGenId, setOwnedGenId] = useState<number | null>(null);
+  const [totalHours, setTotalHours] = useState(0);
+  const [thingspeakChannel, setThingspeakChannel] = useState<string | null>(null);
+  const [operatorsCount, setOperatorsCount] = useState(0);
   const [loadingOwner, setLoadingOwner] = useState(true);
+  const [activeTab, setActiveTab] = useState<'ops' | 'subs'>('ops');
 
   useEffect(() => {
     supabase
       .from('owned_generators')
-      .select('code, area, power, owners(name)')
+      .select('id, code, area, power, total_hours, thingspeak_channel_id, owners(name, phone)')
+      .neq('is_mock', true)
       .limit(1)
       .single()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (data) {
           setGenCode(data.code ?? '');
           setGenArea(data.area ?? '');
           setGenPower(data.power ?? 380);
+          setOwnedGenId(data.id ?? null);
+          setTotalHours(data.total_hours ?? 0);
+          setThingspeakChannel(data.thingspeak_channel_id ?? null);
           const owner = Array.isArray(data.owners) ? data.owners[0] : data.owners;
           setOwnerName((owner as { name?: string })?.name ?? '');
+          setOwnerPhone((owner as { phone?: string })?.phone ?? '');
+          const { count } = await supabase
+            .from('operators')
+            .select('id', { count: 'exact', head: true })
+            .eq('owned_gen_id', data.id);
+          setOperatorsCount(count ?? 0);
         }
         setLoadingOwner(false);
       });
@@ -152,6 +169,18 @@ export default function ControlRoomPage() {
     stopSession,
     error,
   } = useSessionTimer(genCode, ownerName, genArea);
+
+  const ownerMeta = loadingOwner ? null : {
+    name: ownerName,
+    phone: ownerPhone,
+    genCode,
+    genArea,
+    ownedGenId,
+    totalHours,
+    totalOperators: operatorsCount,
+    thingspeakChannel,
+    isOnline: isRunning,
+  };
 
   const time = formatTime(elapsedSeconds);
 
@@ -273,8 +302,37 @@ export default function ControlRoomPage() {
         <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-5)' }}>{loadingOwner ? '' : ownerName}</span>
       </div>
 
-      {/* ── Main Content ── */}
-      <div className="flex-1 px-4 py-6 overflow-y-auto pb-safe">
+      {/* ── Tab Bar ── */}
+      <div className="flex items-center gap-2 px-4 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        {(['ops', 'subs'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="flex-1 py-2 text-xs font-bold rounded-xl transition-all"
+            style={{
+              background: activeTab === tab
+                ? (isDark ? 'rgba(99,102,241,0.18)' : 'rgba(99,102,241,0.1)')
+                : 'transparent',
+              color: activeTab === tab ? '#818cf8' : 'var(--text-4)',
+              border: activeTab === tab ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
+            }}
+          >
+            {tab === 'ops' ? '⚙️ التشغيل' : '👥 المشتركون'}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Subscribers Tab ── */}
+      {activeTab === 'subs' && (
+        <div className="flex-1 px-4 py-5 overflow-y-auto pb-safe">
+          <div className="max-w-lg mx-auto">
+            <SubscriberHub ownerMeta={ownerMeta} />
+          </div>
+        </div>
+      )}
+
+      {/* ── Operations Tab ── */}
+      {activeTab === 'ops' && <div className="flex-1 px-4 py-6 overflow-y-auto pb-safe">
         <div className="max-w-lg mx-auto space-y-6">
 
           {/* ── Error Banner ── */}
@@ -578,7 +636,7 @@ export default function ControlRoomPage() {
 
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
