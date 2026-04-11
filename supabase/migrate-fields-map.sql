@@ -1,18 +1,26 @@
 -- ============================================================
--- S.P.G.M.S — ThingSpeak Fields Map Migration
+-- S.P.G.M.S — ThingSpeak Fields Map Migration v2
 -- Adds: thingspeak_fields_map JSONB column to owned_generators
---       UNIQUE constraint on thingspeak_channel_id (required for
---       Edge Function upsert with onConflict: 'thingspeak_channel_id')
+--       UNIQUE constraint on thingspeak_channel_id
 -- Run in: Supabase Dashboard → SQL Editor (ezwnrrxojplyvvfebasm)
 -- ============================================================
 
+-- Step 1: Add column if missing
 ALTER TABLE owned_generators
   ADD COLUMN IF NOT EXISTS thingspeak_fields_map JSONB;
 
--- Add UNIQUE constraint so the Edge Function can use
--- .upsert({ onConflict: 'thingspeak_channel_id' }).
--- NULLs are never considered duplicates in PostgreSQL UNIQUE constraints,
--- so existing mock rows with NULL channel_id are unaffected.
+-- Step 2: Remove duplicate channel rows — keep the row with the LOWEST id
+-- (the original real generator), delete all later duplicates
+DELETE FROM owned_generators
+WHERE id NOT IN (
+  SELECT MIN(id)
+  FROM owned_generators
+  WHERE thingspeak_channel_id IS NOT NULL
+  GROUP BY thingspeak_channel_id
+)
+AND thingspeak_channel_id IS NOT NULL;
+
+-- Step 3: Add UNIQUE constraint (now safe — no more duplicates)
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -26,8 +34,7 @@ BEGIN
 END
 $$;
 
--- Optional: seed the known real generator's field mapping directly
--- so it is available before the first sync is triggered.
+-- Step 4: Seed field mapping for the known real generator
 UPDATE owned_generators
 SET    thingspeak_fields_map = '{"field1":"voltage","field2":"current","field3":"power"}'
 WHERE  thingspeak_channel_id = '3334757'
