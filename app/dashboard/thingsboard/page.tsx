@@ -1231,19 +1231,40 @@ export default function ThingsBoardPage() {
       const results = await Promise.all(
         gens.map(async (g) => {
           try {
-            const url = `https://api.thingspeak.com/channels/${g.thingspeak_channel_id}/fields/1.json?api_key=${g.thingspeak_read_key}&results=1`;
+            // Use feeds.json to get channel metadata (field labels) AND latest feed in one request
+            const url = `https://api.thingspeak.com/channels/${g.thingspeak_channel_id}/feeds.json?api_key=${g.thingspeak_read_key}&results=1`;
             const res = await fetch(url);
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const json = await res.json();
             const feed = json.feeds?.[0];
-            const v = feed?.field1 ? parseFloat(feed.field1) : null;
+
+            // Build fieldsMap dynamically from channel metadata (field1 label, field2 label, …)
+            const ch = json.channel ?? {};
+            const dynamicMap: Record<string, string> = {};
+            for (let i = 1; i <= 8; i++) {
+              const label = ch[`field${i}`] as string | undefined;
+              if (label?.trim()) dynamicMap[`field${i}`] = label.trim();
+            }
+            // Prefer dynamic map; fall back to DB value if the live channel has no labels
+            const dbMap = (g.thingspeak_fields_map as Record<string, string> | null) ?? null;
+            const fieldsMap: Record<string, string> | null =
+              Object.keys(dynamicMap).length ? dynamicMap : dbMap;
+
+            // Determine voltage from the field labelled "voltage" / "فولت" (fallback: field1)
+            let v: number | null = null;
+            const voltKey = Object.entries(fieldsMap ?? {}).find(
+              ([, lbl]) => lbl.toLowerCase().includes('volt') || lbl.includes('فولت'),
+            )?.[0] ?? 'field1';
+            const raw = feed?.[voltKey];
+            if (raw != null) { const n = parseFloat(raw); if (!isNaN(n)) v = n; }
+
             return {
               id:        g.id,
               code:      g.code,
               area:      g.area,
               channel:   g.thingspeak_channel_id,
               readKey:   g.thingspeak_read_key,
-              fieldsMap: (g.thingspeak_fields_map as Record<string, string> | null) ?? null,
+              fieldsMap,
               voltage:   v,
               status:    v !== null ? voltageToStatus(v) : 'offline' as const,
               lastSeen:  feed?.created_at ?? null,
