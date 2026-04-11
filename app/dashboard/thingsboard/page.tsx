@@ -11,6 +11,7 @@ import {
   Activity, BarChart3, Clock, Layers, Settings2,
   Eye, EyeOff, Save, RotateCcw, Copy, Check, FlaskConical,
   Shield, Globe, SlidersHorizontal, BellRing, Gauge, ExternalLink,
+  Bell, X, Link2, FileEdit, MapPin, Bolt, Star,
 } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -38,6 +39,19 @@ interface TsGen {
 }
 
 type HealthStatus = 'checking' | 'ok' | 'degraded' | 'error';
+
+// Incomplete generators discovered by sync (area = 'غير محدد')
+interface IncompleteGen {
+  id:      number;
+  code:    string;
+  channel: string;
+}
+
+interface ExistingLinkedGen {
+  id:   number;
+  code: string;
+  area: string;
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function timeAgo(iso: string) {
@@ -154,6 +168,512 @@ function Spark({ data, color }: { data: number[]; color: string }) {
 
 // ─── Settings persistence key ────────────────────────────────────────────────
 const STORAGE_KEY = 'spgms_tb_settings';
+
+// ─── New Generator Alert Banner ──────────────────────────────────────────────
+function NewGeneratorAlert({
+  gens,
+  onUpdate,
+  onLink,
+  onDismiss,
+}: {
+  gens: IncompleteGen[];
+  onUpdate: (g: IncompleteGen) => void;
+  onLink:   (g: IncompleteGen) => void;
+  onDismiss: () => void;
+}) {
+  if (gens.length === 0) return null;
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: -32, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0,   scale: 1 }}
+        exit={{    opacity: 0, y: -24, scale: 0.97 }}
+        transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+        className="relative overflow-hidden rounded-2xl"
+        style={{
+          background:  'linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(239,68,68,0.08) 100%)',
+          border:      '1.5px solid rgba(245,158,11,0.5)',
+          boxShadow:   '0 0 40px rgba(245,158,11,0.15), 0 4px 24px rgba(0,0,0,0.4)',
+        }}
+      >
+        {/* Pulsing top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-0.5 animate-pulse"
+             style={{ background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.9), rgba(239,68,68,0.7), transparent)' }} />
+
+        {/* Dismiss */}
+        <button
+          onClick={onDismiss}
+          className="absolute top-3 left-3 p-1.5 rounded-lg transition-all hover:bg-white/10 z-10"
+          style={{ color: 'rgba(255,255,255,0.4)' }}
+          aria-label="إغلاق الإشعار"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        <div className="px-5 pt-5 pb-4">
+          {/* Header */}
+          <div className="flex items-start gap-4 mb-4">
+            {/* Icon with rings */}
+            <div className="relative flex-shrink-0 mt-0.5">
+              <div className="absolute -inset-2 rounded-full animate-ping opacity-20"
+                   style={{ background: 'rgba(245,158,11,0.6)' }} />
+              <div className="absolute -inset-1 rounded-full animate-pulse opacity-30"
+                   style={{ background: 'rgba(245,158,11,0.5)' }} />
+              <div className="relative w-10 h-10 rounded-xl flex items-center justify-center"
+                   style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.3), rgba(239,68,68,0.2))', border: '1px solid rgba(245,158,11,0.5)' }}>
+                <Bell className="w-5 h-5" style={{ color: '#fbbf24' }} />
+              </div>
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <h3 className="text-base font-bold" style={{ color: '#fbbf24', fontFamily: 'var(--font-ibm-arabic)' }}>
+                  ⚡ تم تشغيل {gens.length > 1 ? `${gens.length} مولدات جديدة` : 'مولد جديد'} بدون معلومات
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse"
+                      style={{ background: 'rgba(239,68,68,0.2)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.4)' }}>
+                  يتطلب إجراءً فورياً
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                تم اكتشاف {gens.length > 1 ? 'مولدات جديدة' : 'مولد جديد'} في الشبكة وتم تسجيلها تلقائياً،
+                لكن بياناتها غير مكتملة. كي نتمكن من ربط المعلومات وإدارة المولد بشكل صحيح،{' '}
+                <span style={{ color: '#fbbf24', fontWeight: 600 }}>يرجى تحديث البيانات فوراً.</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Generator cards */}
+          <div className="space-y-2.5">
+            {gens.map((g, i) => (
+              <motion.div
+                key={g.id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.08 }}
+                className="flex items-center gap-3 flex-wrap rounded-xl px-4 py-3"
+                style={{
+                  background: 'rgba(0,0,0,0.25)',
+                  border:     '1px solid rgba(245,158,11,0.2)',
+                }}
+              >
+                {/* Generator icon */}
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                     style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                  <Bolt className="w-4 h-4" style={{ color: '#fbbf24' }} />
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold font-mono" style={{ color: 'var(--text-1)' }}>{g.code}</p>
+                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                    رمز القناة: {g.channel} · الموقع: <span style={{ color: '#f59e0b' }}>غير محدد</span>
+                  </p>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => onLink(g)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105"
+                    style={{
+                      background: 'rgba(99,102,241,0.12)',
+                      border:     '1px solid rgba(99,102,241,0.35)',
+                      color:      '#a5b4fc',
+                      fontFamily: 'var(--font-ibm-arabic)',
+                    }}
+                  >
+                    <Link2 className="w-3.5 h-3.5" />
+                    ربط بمولد موجود
+                  </button>
+                  <button
+                    onClick={() => onUpdate(g)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all hover:scale-105"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(239,68,68,0.15))',
+                      border:     '1px solid rgba(245,158,11,0.5)',
+                      color:      '#fbbf24',
+                      fontFamily: 'var(--font-ibm-arabic)',
+                      boxShadow:  '0 0 12px rgba(245,158,11,0.15)',
+                    }}
+                  >
+                    <FileEdit className="w-3.5 h-3.5" />
+                    تحديث البيانات
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom scanning line */}
+        <motion.div
+          className="h-px w-full"
+          style={{ background: 'linear-gradient(90deg,transparent,rgba(245,158,11,0.6),transparent)' }}
+          animate={{ x: ['-100%', '100%'] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: 'linear' }}
+        />
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+// ─── Update Generator Modal ───────────────────────────────────────────────────
+function UpdateGeneratorModal({
+  gen,
+  onClose,
+  onSaved,
+}: {
+  gen: IncompleteGen;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [area,    setArea]    = useState('');
+  const [power,   setPower]   = useState('');
+  const [address, setAddress] = useState('');
+  const [saving,  setSaving]  = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+
+  const handleSave = async () => {
+    if (!area.trim()) { setError('يرجى إدخال اسم المنطقة/الموقع'); return; }
+    if (!power.trim() || isNaN(Number(power))) { setError('يرجى إدخال القدرة الكهربائية (رقم صحيح)'); return; }
+    setSaving(true);
+    setError(null);
+    const { error: upErr } = await supabase
+      .from('owned_generators')
+      .update({
+        area:    area.trim(),
+        power:   Number(power),
+        address: address.trim() || null,
+      })
+      .eq('id', gen.id);
+    setSaving(false);
+    if (upErr) { setError(upErr.message); return; }
+    onSaved();
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 24 }}
+        animate={{ opacity: 1, scale: 1,    y: 0 }}
+        exit={{    opacity: 0, scale: 0.92, y: 16 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+        className="w-full max-w-md rounded-2xl overflow-hidden"
+        style={{
+          background: 'linear-gradient(160deg, rgba(18,18,32,0.98) 0%, rgba(12,12,24,0.99) 100%)',
+          border:     '1px solid rgba(245,158,11,0.35)',
+          boxShadow:  '0 0 60px rgba(245,158,11,0.12), 0 24px 48px rgba(0,0,0,0.6)',
+        }}
+      >
+        {/* Header */}
+        <div className="relative px-6 pt-6 pb-4 border-b" style={{ borderColor: 'rgba(245,158,11,0.12)' }}>
+          <div className="absolute top-0 left-0 right-0 h-0.5"
+               style={{ background: 'linear-gradient(90deg,transparent,rgba(245,158,11,0.8),transparent)' }} />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                 style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)' }}>
+              <FileEdit className="w-5 h-5" style={{ color: '#fbbf24' }} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold" style={{ color: 'var(--text-1)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                تحديث بيانات المولد
+              </h2>
+              <p className="text-xs mt-0.5 font-mono" style={{ color: 'var(--text-5)' }}>{gen.code} · CH {gen.channel}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="absolute top-4 left-4 p-1.5 rounded-lg hover:bg-white/10 transition-all"
+                  style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div className="px-6 py-5 space-y-4">
+          {/* Area */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-semibold"
+                   style={{ color: '#fbbf24', fontFamily: 'var(--font-ibm-arabic)' }}>
+              <MapPin className="w-3.5 h-3.5" />
+              اسم المنطقة / الموقع <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <input
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+              placeholder="مثال: الرمادي — المنطقة الصناعية"
+              className="w-full rounded-xl px-4 py-2.5 text-sm outline-none transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                border:     '1px solid rgba(255,255,255,0.1)',
+                color:      'var(--text-1)',
+                fontFamily: 'var(--font-ibm-arabic)',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = 'rgba(245,158,11,0.5)')}
+              onBlur={(e)  => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+            />
+          </div>
+
+          {/* Power */}
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-semibold"
+                   style={{ color: '#fbbf24', fontFamily: 'var(--font-ibm-arabic)' }}>
+              <Bolt className="w-3.5 h-3.5" />
+              القدرة الكهربائية (kW) <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <input
+              type="number"
+              value={power}
+              onChange={(e) => setPower(e.target.value)}
+              placeholder="مثال: 500"
+              className="w-full rounded-xl px-4 py-2.5 text-sm outline-none transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                border:     '1px solid rgba(255,255,255,0.1)',
+                color:      'var(--text-1)',
+                fontFamily: 'var(--font-geist-mono), monospace',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = 'rgba(245,158,11,0.5)')}
+              onBlur={(e)  => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+            />
+          </div>
+
+          {/* Address (optional) */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
+              العنوان التفصيلي <span className="font-normal" style={{ color: 'var(--text-5)' }}>(اختياري)</span>
+            </label>
+            <input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="مثال: شارع المدينة الصناعية، قطعة 12"
+              className="w-full rounded-xl px-4 py-2.5 text-sm outline-none transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                border:     '1px solid rgba(255,255,255,0.1)',
+                color:      'var(--text-1)',
+                fontFamily: 'var(--font-ibm-arabic)',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = 'rgba(16,185,129,0.45)')}
+              onBlur={(e)  => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
+            />
+          </div>
+
+          {/* Error */}
+          {error && (
+            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg"
+              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', fontFamily: 'var(--font-ibm-arabic)' }}>
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              {error}
+            </motion.div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="px-6 pb-6 flex gap-3">
+          <button onClick={onClose} disabled={saving}
+            className="flex-1 py-2.5 rounded-xl text-sm transition-all"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: 'var(--text-4)',
+              fontFamily: 'var(--font-ibm-arabic)',
+            }}>
+            إلغاء
+          </button>
+          <button onClick={handleSave} disabled={saving}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-60"
+            style={{
+              background: 'linear-gradient(135deg, rgba(245,158,11,0.3), rgba(239,68,68,0.2))',
+              border:     '1px solid rgba(245,158,11,0.5)',
+              color:      '#fbbf24',
+              fontFamily: 'var(--font-ibm-arabic)',
+              boxShadow:  '0 0 20px rgba(245,158,11,0.15)',
+            }}>
+            {saving
+              ? <><RefreshCw className="w-4 h-4 animate-spin" /> جارٍ الحفظ…</>
+              : <><Save className="w-4 h-4" /> حفظ البيانات</>}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Link-to-Existing Modal ───────────────────────────────────────────────────
+function LinkToExistingModal({
+  gen,
+  onClose,
+  onSaved,
+}: {
+  gen:     IncompleteGen;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [candidates,  setCandidates]  = useState<ExistingLinkedGen[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
+  const [selected,    setSelected]    = useState<number | null>(null);
+  const [saving,      setSaving]      = useState(false);
+  const [error,       setError]       = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('owned_generators')
+        .select('id, code, area')
+        .not('area', 'eq', 'غير محدد')
+        .is('thingspeak_channel_id', null)
+        .order('code');
+      setCandidates((data as ExistingLinkedGen[] | null) ?? []);
+      setLoadingList(false);
+    })();
+  }, []);
+
+  const handleLink = async () => {
+    if (!selected) { setError('يرجى اختيار مولد من القائمة'); return; }
+    setSaving(true);
+    setError(null);
+    // Transfer the ThingSpeak channel to the selected existing generator
+    const { error: upErr } = await supabase
+      .from('owned_generators')
+      .update({ thingspeak_channel_id: gen.channel })
+      .eq('id', selected);
+    if (upErr) { setSaving(false); setError(upErr.message); return; }
+    // Remove the incomplete auto-discovered row
+    await supabase.from('owned_generators').delete().eq('id', gen.id);
+    setSaving(false);
+    onSaved();
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 24 }}
+        animate={{ opacity: 1, scale: 1,    y: 0 }}
+        exit={{    opacity: 0, scale: 0.92, y: 16 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+        className="w-full max-w-md rounded-2xl overflow-hidden"
+        style={{
+          background: 'linear-gradient(160deg, rgba(18,18,32,0.98) 0%, rgba(12,12,24,0.99) 100%)',
+          border:     '1px solid rgba(99,102,241,0.35)',
+          boxShadow:  '0 0 60px rgba(99,102,241,0.12), 0 24px 48px rgba(0,0,0,0.6)',
+        }}
+      >
+        {/* Header */}
+        <div className="relative px-6 pt-6 pb-4 border-b" style={{ borderColor: 'rgba(99,102,241,0.12)' }}>
+          <div className="absolute top-0 left-0 right-0 h-0.5"
+               style={{ background: 'linear-gradient(90deg,transparent,rgba(99,102,241,0.8),transparent)' }} />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                 style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>
+              <Link2 className="w-5 h-5" style={{ color: '#a5b4fc' }} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold" style={{ color: 'var(--text-1)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                ربط بمولد موجود
+              </h2>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                سيتم نقل قناة <span className="font-mono">{gen.channel}</span> إلى المولد المختار
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="absolute top-4 left-4 p-1.5 rounded-lg hover:bg-white/10 transition-all"
+                  style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="px-6 py-5 space-y-4">
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
+            اختر المولد الذي ينتمي إليه هذا الجهاز — سيتم ربط القناة به وحذف السجل المكرر تلقائياً.
+          </p>
+
+          {loadingList ? (
+            <div className="flex items-center justify-center py-8 gap-3"
+                 style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
+              <RefreshCw className="w-4 h-4 animate-spin" style={{ color: '#a5b4fc' }} />
+              جارٍ تحميل قائمة المولدات…
+            </div>
+          ) : candidates.length === 0 ? (
+            <div className="text-center py-8 space-y-2">
+              <Star className="w-8 h-8 mx-auto opacity-30" style={{ color: '#a5b4fc' }} />
+              <p className="text-sm" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                لا توجد مولدات مسجلة بدون قناة متاحة للربط
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                استخدم &ldquo;تحديث البيانات&rdquo; لإكمال معلومات هذا المولد بدلاً من ذلك
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {candidates.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setSelected(c.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-right transition-all"
+                  style={{
+                    background: selected === c.id ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
+                    border:     `1.5px solid ${selected === c.id ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.06)'}`,
+                  }}
+                >
+                  <div className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center"
+                       style={{ background: selected === c.id ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)', border: `1px solid ${selected === c.id ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.08)'}` }}>
+                    {selected === c.id
+                      ? <CheckCircle2 className="w-4 h-4" style={{ color: '#a5b4fc' }} />
+                      : <Bolt className="w-4 h-4" style={{ color: 'var(--text-5)' }} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold font-mono text-right" style={{ color: 'var(--text-1)' }}>{c.code}</p>
+                    <p className="text-[11px] text-right" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>{c.area}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {error && (
+            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg"
+              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', fontFamily: 'var(--font-ibm-arabic)' }}>
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              {error}
+            </motion.div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="px-6 pb-6 flex gap-3">
+          <button onClick={onClose} disabled={saving}
+            className="flex-1 py-2.5 rounded-xl text-sm transition-all"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: 'var(--text-4)',
+              fontFamily: 'var(--font-ibm-arabic)',
+            }}>
+            إلغاء
+          </button>
+          <button onClick={handleLink} disabled={saving || !selected || candidates.length === 0}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+            style={{
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.2))',
+              border:     '1px solid rgba(99,102,241,0.45)',
+              color:      '#a5b4fc',
+              fontFamily: 'var(--font-ibm-arabic)',
+              boxShadow:  '0 0 20px rgba(99,102,241,0.12)',
+            }}>
+            {saving
+              ? <><RefreshCw className="w-4 h-4 animate-spin" /> جارٍ الربط…</>
+              : <><Link2 className="w-4 h-4" /> تأكيد الربط</>}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 interface TBSettings {
   serverUrl:       string;
@@ -667,6 +1187,12 @@ export default function ThingsBoardPage() {
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncToast, setSyncToast]     = useState<{ msg: string; ok: boolean } | null>(null);
 
+  // ── New-generator notification state ─────────────────────────────────────
+  const [incompleteGens,   setIncompleteGens]   = useState<IncompleteGen[]>([]);
+  const [alertDismissed,   setAlertDismissed]   = useState(false);
+  const [updateTarget,     setUpdateTarget]     = useState<IncompleteGen | null>(null);
+  const [linkTarget,       setLinkTarget]       = useState<IncompleteGen | null>(null);
+
   // mock load-history per generator (last 10 readings)
   const [sparkData] = useState<Record<string, number[]>>(() => ({}));
 
@@ -740,6 +1266,14 @@ export default function ThingsBoardPage() {
         })
       );
       setTsGens(results);
+      // Surface generators that have no area set yet
+      const incomplete = results
+        .filter((g) => g.area === 'غير محدد')
+        .map((g) => ({ id: g.id, code: g.code, channel: g.channel }));
+      if (incomplete.length > 0) {
+        setIncompleteGens(incomplete);
+        setAlertDismissed(false);
+      }
     } catch { /* silent */ } finally {
       setTsLoading(false);
     }
@@ -897,6 +1431,39 @@ export default function ThingsBoardPage() {
           </button>
         </div>
       </div>
+
+      {/* ── Modals (Update / Link) ───────────────────────────────────── */}
+      <AnimatePresence>
+        {updateTarget && (
+          <UpdateGeneratorModal
+            key="update-modal"
+            gen={updateTarget}
+            onClose={() => setUpdateTarget(null)}
+            onSaved={() => { setUpdateTarget(null); fetchTsGens(); }}
+          />
+        )}
+        {linkTarget && (
+          <LinkToExistingModal
+            key="link-modal"
+            gen={linkTarget}
+            onClose={() => setLinkTarget(null)}
+            onSaved={() => { setLinkTarget(null); fetchTsGens(); }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── New Generator Alert Banner ───────────────────────────────── */}
+      <AnimatePresence>
+        {!alertDismissed && incompleteGens.length > 0 && (
+          <NewGeneratorAlert
+            key="new-gen-alert"
+            gens={incompleteGens}
+            onUpdate={(g) => setUpdateTarget(g)}
+            onLink={(g)   => setLinkTarget(g)}
+            onDismiss={() => setAlertDismissed(true)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ── KPI row ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
