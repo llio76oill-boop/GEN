@@ -485,18 +485,31 @@ export default function ThingSpeakPage() {
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [search,       setSearch]       = useState('');
 
-  // ── Fetch real generators on mount ──
+  // ── Fetch real generators on mount (from owned_generators with ThingSpeak channels) ──
   useEffect(() => {
     setLoadingGens(true);
     supabase
-      .from('generators')
-      .select('id, lat, lng, status, power, area, hours')
-      .neq('is_mock', true)
+      .from('owned_generators')
+      .select('id, area, status, power, total_hours, thingspeak_channel_id, thingspeak_read_key')
+      .not('thingspeak_channel_id', 'is', null)
+      .eq('is_mock', false)
       .then(({ data, error }) => {
         if (error) {
           setGensError(error.message);
         } else {
-          setGenerators((data ?? []) as Generator[]);
+          // Map owned_generators to Generator shape; default coords = Ramadi city centre
+          setGenerators(
+            (data ?? []).map((g) => ({
+              id:     g.id,
+              lat:    33.4235,
+              lng:    43.3155,
+              status: (g.status as Generator['status']) ?? 'offline',
+              power:  g.power ?? 0,
+              area:   g.area ?? 'غير محدد',
+              hours:  g.total_hours ?? 0,
+              is_mock: false,
+            })) as Generator[]
+          );
         }
         setLoadingGens(false);
       });

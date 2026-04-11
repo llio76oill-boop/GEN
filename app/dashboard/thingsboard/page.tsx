@@ -761,7 +761,23 @@ export default function ThingsBoardPage() {
     return () => clearInterval(id);
   }, [autoRefresh, fetchTsGens]);
 
-  // ── Auto-Discovery: invoke Edge Function → sync all ThingSpeak channels ──
+  // ── Silent auto-discovery: runs on mount + every 5 min, no toast ────────────
+  const silentSync = useCallback(async () => {
+    try {
+      const res = await fetch('/.netlify/functions/sync-thingspeak', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      // Only re-fetch generators list if new channels were inserted
+      if (res.ok && data.ok && data.inserted > 0) await fetchTsGens();
+    } catch { /* silent — don't disrupt the UI */ }
+  }, [fetchTsGens]);
+
+  useEffect(() => { silentSync(); }, [silentSync]);  // once on mount
+  useEffect(() => {
+    const id = setInterval(silentSync, 5 * 60 * 1000); // every 5 min
+    return () => clearInterval(id);
+  }, [silentSync]);
+
+  // ── Manual Auto-Discovery: invoke Netlify Function → sync all ThingSpeak channels ──
   const handleSync = useCallback(async () => {
     if (syncLoading) return;
     setSyncLoading(true);
@@ -979,14 +995,13 @@ export default function ThingsBoardPage() {
             exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}
             className="space-y-4">
 
-            {/* ── ThingSpeak Bridge Section ──────────────────────────── */}
-            {(tsGens.length > 0 || tsLoading) && (
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card overflow-hidden"
-                style={{ border: '1px solid rgba(168,85,247,0.2)' }}
-              >
+            {/* ── ThingSpeak Bridge Section — always visible ─────────── */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card overflow-hidden"
+              style={{ border: '1px solid rgba(168,85,247,0.2)' }}
+            >
                 <div className="px-5 py-3 flex items-center justify-between border-b"
                      style={{ borderColor: 'rgba(168,85,247,0.15)', background: 'rgba(168,85,247,0.06)' }}>
                   <div className="flex items-center gap-3">
@@ -1057,7 +1072,26 @@ export default function ThingsBoardPage() {
                   <div className="px-5 py-6 flex items-center gap-3 text-sm"
                        style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
                     <RefreshCw className="w-4 h-4 animate-spin" style={{ color: '#a855f7' }} />
-                    جارٍ جلب بيانات ThingSpeak…
+                    جارٍ اكتشاف قنوات ThingSpeak تلقائياً…
+                  </div>
+                ) : tsGens.length === 0 ? (
+                  <div className="px-5 py-8 flex flex-col items-center gap-3 text-center">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                         style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}>
+                      <Gauge className="w-5 h-5" style={{ color: '#a855f7' }} />
+                    </div>
+                    <p className="text-sm" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                      لم يتم اكتشاف قنوات بعد — جارٍ المزامنة التلقائية مع ThingSpeak…
+                    </p>
+                    <button
+                      onClick={handleSync}
+                      disabled={syncLoading}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs transition-all"
+                      style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.3)', color: '#c084fc', fontFamily: 'var(--font-ibm-arabic)' }}
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${syncLoading ? 'animate-spin' : ''}`} />
+                      {syncLoading ? 'جارٍ المزامنة…' : 'مزامنة الآن'}
+                    </button>
                   </div>
                 ) : (
                   <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
@@ -1117,10 +1151,9 @@ export default function ThingsBoardPage() {
                     })}
                   </div>
                 )}
-              </motion.div>
-            )}
+            </motion.div>
 
-            {rows.length === 0 && !loading && (
+            {rows.length === 0 && !loading && tsGens.length === 0 && !tsLoading && (
               <div className="glass-card p-12 flex flex-col items-center gap-4 text-center">
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
                      style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)' }}>
@@ -1128,10 +1161,10 @@ export default function ThingsBoardPage() {
                 </div>
                 <div>
                   <p className="text-base font-semibold mb-1" style={{ color: 'var(--text-2)', fontFamily: 'var(--font-ibm-arabic)' }}>
-                    لا توجد بيانات حية حتى الآن
+                    في انتظار بيانات ThingsBoard
                   </p>
                   <p className="text-sm" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
-                    ستظهر هنا قراءات التلغراف فور بدء إرسالها من ThingsBoard Rule Engine
+                    بيانات ThingSpeak الحية تظهر أعلاه — ستظهر هنا بيانات Rule Engine فور الربط
                   </p>
                 </div>
                 <span className="text-xs font-mono px-3 py-1.5 rounded-full"
