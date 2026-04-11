@@ -168,6 +168,10 @@ function FocusHandler({ gen }: { gen: Generator | null }) {
 export default function FleetMap({ generators, focusedGen, onSelectGen }: FleetMapProps) {
   const layerRef = useRef<L.LayerGroup | null>(null);
   const [index, setIndex] = useState<Supercluster<{ genId: number }> | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Wait for the real DOM to be ready before letting Leaflet initialize
+  useEffect(() => { setMounted(true); }, []);
 
   // Build Supercluster index when generators change
   useEffect(() => {
@@ -201,6 +205,17 @@ export default function FleetMap({ generators, focusedGen, onSelectGen }: FleetM
 
   // Al-Anbar center
   const CENTER: [number, number] = [33.43, 43.30];
+
+  if (!mounted) {
+    return (
+      <div
+        style={{ width: '100%', height: '100%', background: '#0d0d1a', borderRadius: 'inherit' }}
+        className="flex items-center justify-center"
+      >
+        <div className="w-6 h-6 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <MapContainer
