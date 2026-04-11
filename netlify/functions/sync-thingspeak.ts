@@ -120,51 +120,82 @@ export const handler: Handler = async (event: HandlerEvent) => {
   );
   console.log(`[sync] Existing rows in DB: ${existingMap.size}`);
 
-  // 5. Build upsert payload
-  const upsertRows = channels.map((ch) => {
-    const channelId = String(ch.id);
-    const readKey   = ch.api_keys?.find((k) => !k.write_flag)?.api_key ?? null;
-    const fieldsMap = extractFieldsMap(ch);
+  // 5. Build separate insert / update payloads
+  //    Upsert sends an INSERT first, so all NOT NULL columns must be present.
+  //    To avoid overwriting existing area/power/status with defaults, we split
+  //    into two operations: INSERT new rows, UPDATE existing rows (channel fields only).
+  const toInsertRows: Record<string, unknown>[] = [];
+  const toUpdateRows: { id: number; code: string; thingspeak_read_key: string | null; thingspeak_fields_map: Record<string,string> | null; is_mock: boolean }[] = [];
+
+  for (const ch of channels) {
+    const channelId  = String(ch.id);
+    const readKey    = ch.api_keys?.find((k) => !k.write_flag)?.api_key ?? null;
+    const fieldsMap  = extractFieldsMap(ch);
     const existingId = existingMap.get(channelId);
-    const row: Record<string, unknown> = {
-      owner_id:              ownerId,
-      code:                  ch.name?.trim() || `CH-${channelId}`,
-      thingspeak_channel_id: channelId,
-      thingspeak_read_key:   readKey,
-      thingspeak_fields_map: Object.keys(fieldsMap).length ? fieldsMap : null,
-      is_mock:               false,
-    };
+
     if (existingId !== undefined) {
-      row.id = existingId;
+      // Only update the ThingSpeak-related fields — don't touch area/power/status
+      toUpdateRows.push({
+        id:                    existingId,
+        code:                  ch.name?.trim() || `CH-${channelId}`,
+        thingspeak_read_key:   readKey,
+        thingspeak_fields_map: Object.keys(fieldsMap).length ? fieldsMap : null,
+        is_mock:               false,
+      });
     } else {
-      row.area        = 'غير محدد';
-      row.power       = 0;
-      row.status      = 'offline';
-      row.total_hours = 0;
+      // Full row for INSERT (all NOT NULL columns required)
+      toInsertRows.push({
+        owner_id:              ownerId,
+        code:                  ch.name?.trim() || `CH-${channelId}`,
+        area:                  'غير محدد',
+        power:                 0,
+        status:                'offline',
+        total_hours:           0,
+        thingspeak_channel_id: channelId,
+        thingspeak_read_key:   readKey,
+        thingspeak_fields_map: Object.keys(fieldsMap).length ? fieldsMap : null,
+        is_mock:               false,
+      });
     }
-    return row;
-  });
-
-  const toInsert = upsertRows.filter((r) => r.id === undefined).length;
-  const toUpdate = upsertRows.filter((r) => r.id !== undefined).length;
-  console.log(`[sync] insert: ${toInsert}, update: ${toUpdate}`);
-
-  const { error: upsertErr } = await supabase
-    .from('owned_generators')
-    .upsert(upsertRows, { onConflict: 'thingspeak_channel_id', ignoreDuplicates: false });
-
-  if (upsertErr) {
-    console.error('[sync] Upsert error:', upsertErr.message);
-    if (upsertErr.code === '42P10' || upsertErr.message?.includes('no unique or exclusion constraint')) {
-      return { statusCode: 500, headers: CORS, body: JSON.stringify({ ok: false, error: 'شغّل migrate-fields-map.sql في Supabase SQL Editor أولاً' }) };
-    }
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ ok: false, error: upsertErr.message }) };
   }
 
-  console.log(`[sync] ✓ inserted: ${toInsert}, updated: ${toUpdate}`);
+  console.log(`[sync] insert: ${toInsertRows.length}, update: ${toUpdateRows.length}`);
+
+  // INSERT new channels
+  if (toInsertRows.length > 0) {
+    const { error: insertErr } = await supabase
+      .from('owned_generators')
+      .insert(toInsertRows);
+    if (insertErr) {
+      console.error('[sync] Insert error:', insertErr.message);
+      if (insertErr.code === '23505') {
+        // duplicate key — channel was added by a concurrent request, ignore
+        console.warn('[sync] Duplicate key on insert — concurrent sync, not fatal');
+      } else {
+        return { statusCode: 500, headers: CORS, body: JSON.stringify({ ok: false, error: insertErr.message }) };
+      }
+    }
+  }
+
+  // UPDATE existing channels (channel fields only — preserves area/power/status)
+  for (const row of toUpdateRows) {
+    const { id, ...fields } = row;
+    const { error: updateErr } = await supabase
+      .from('owned_generators')
+      .update(fields)
+      .eq('id', id);
+    if (updateErr) {
+      console.error(`[sync] Update error for id=${id}:`, updateErr.message);
+      // non-fatal — log and continue
+    }
+  }
+
+  const inserted = toInsertRows.length;
+  const updated  = toUpdateRows.length;
+  console.log(`[sync] ✓ inserted: ${inserted}, updated: ${updated}`);
   return {
     statusCode: 200,
     headers: CORS,
-    body: JSON.stringify({ ok: true, summary: `${toInsert} مُضاف · ${toUpdate} مُحدَّث`, inserted: toInsert, updated: toUpdate, skipped: 0, total: channels.length }),
+    body: JSON.stringify({ ok: true, summary: `${inserted} مُضاف · ${updated} مُحدَّث`, inserted, updated, skipped: 0, total: channels.length }),
   };
 };
