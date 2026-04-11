@@ -772,21 +772,29 @@ export default function ThingsBoardPage() {
         inserted: number; updated: number; skipped: number;
       }>('sync-thingspeak-channels');
 
-      if (fnErr) throw fnErr;
+      // FunctionsHttpError carries the real body in .context — extract it
+      if (fnErr) {
+        let detail = fnErr.message;
+        try {
+          // @ts-ignore
+          const body = await fnErr.context?.json?.();
+          if (body?.error) detail = body.error;
+        } catch { /* use original message */ }
+        throw new Error(detail);
+      }
       if (!data?.ok) throw new Error(data?.error ?? 'الاستجابة غير صالحة');
 
       setSyncToast({
         ok: true,
-        msg: `تمت مزامنة المولدات بنجاح — ${data.inserted} جديد · ${data.updated} محدَّث · ${data.skipped} متجاهَل`,
+        msg: `تمت مزامنة المولدات بنجاح — ${data.inserted} جديد · ${data.updated} محدَّث · ${data.skipped ?? 0} متجاهَل`,
       });
-      // Force immediate re-fetch so new channels appear without page reload
       await fetchTsGens();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setSyncToast({ ok: false, msg: `فشلت المزامنة: ${msg}` });
     } finally {
       setSyncLoading(false);
-      setTimeout(() => setSyncToast(null), 6000);
+      setTimeout(() => setSyncToast(null), 8000);
     }
   }, [syncLoading, fetchTsGens]);
 

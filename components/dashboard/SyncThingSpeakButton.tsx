@@ -33,9 +33,6 @@ export default function SyncThingSpeakButton({ onSynced }: SyncThingSpeakButtonP
     setToast(null);
 
     try {
-      // supabase.functions.invoke automatically sends:
-      //   apikey: NEXT_PUBLIC_SUPABASE_ANON_KEY   (required by Supabase gateway)
-      //   Authorization: Bearer <session jwt>      (if user is logged in)
       const { data, error: fnErr } = await supabase.functions.invoke<{
         ok: boolean;
         error?: string;
@@ -44,8 +41,16 @@ export default function SyncThingSpeakButton({ onSynced }: SyncThingSpeakButtonP
         skipped: number;
       }>('sync-thingspeak-channels');
 
-      // fnErr is set for network failures or non-2xx HTTP from the Edge Function
-      if (fnErr) throw fnErr;
+      // FunctionsHttpError carries the real body in .context — extract it
+      if (fnErr) {
+        let detail = fnErr.message;
+        try {
+          // @ts-ignore — context is present on FunctionsHttpError
+          const body = await fnErr.context?.json?.();
+          if (body?.error) detail = body.error;
+        } catch { /* use original message */ }
+        throw new Error(detail);
+      }
       if (!data?.ok) throw new Error(data?.error ?? 'الاستجابة غير صالحة من الدالة');
 
       const summary: SyncSummary = {
