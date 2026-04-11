@@ -614,7 +614,7 @@ export default function ThingSpeakPage() {
           </div>
         </div>
 
-        {/* ThingSpeak status */}
+        {/* IoT status */}
         {view === 'fleet' && (
           <div className="flex items-center gap-2">
             <span

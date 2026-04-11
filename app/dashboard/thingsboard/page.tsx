@@ -856,14 +856,14 @@ export default function ThingsBoardPage() {
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>ThingsBoard</h1>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--text-1)' }}>لوحة الإرسال الحي</h1>
               <span className="text-xs px-2 py-0.5 rounded-full font-mono font-bold"
                     style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)' }}>
-                IoT Platform
+                مباشر
               </span>
             </div>
             <p className="text-sm" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
-              مركز بيانات إنترنت الأشياء — 3,000 مولد في الأنبار
+              مركز التحكم الذكي — متابعة المولدات مباشرةً
             </p>
           </div>
         </div>
@@ -941,7 +941,7 @@ export default function ThingsBoardPage() {
           </div>
           <div>
             <p className="text-xs mb-1" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
-              Edge Function Webhook
+              وحدة الاستقبال
             </p>
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-emerald-400" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
@@ -1010,11 +1010,11 @@ export default function ThingsBoardPage() {
                       <Gauge className="w-4 h-4" style={{ color: '#a855f7' }} />
                     </div>
                     <span className="text-sm font-semibold" style={{ color: '#a855f7', fontFamily: 'var(--font-ibm-arabic)' }}>
-                      ThingSpeak — مولدات مُوَصَّلة
+                      أجهزة الإرسال المُوَصَّلة
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full"
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-full"
                           style={{ background: 'rgba(168,85,247,0.12)', color: '#c084fc', border: '1px solid rgba(168,85,247,0.2)' }}>
-                      {tsGens.length} قناة
+                      {tsGens.length} جهاز
                     </span>
                   </div>
                   {/* Actions: Auto-Discovery Sync + manual refresh */}
@@ -1121,14 +1121,7 @@ export default function ThingsBoardPage() {
                             compact
                             pollMs={15_000}
                           />
-                          {/* Channel link */}
-                          <a href={`https://thingspeak.com/channels/${g.channel}`}
-                             target="_blank" rel="noopener noreferrer"
-                             className="text-[10px] font-mono flex items-center gap-1 hover:opacity-80 transition-opacity"
-                             style={{ color: '#a855f7' }}>
-                            <Radio className="w-3 h-3" />
-                            CH {g.channel}
-                          </a>
+                          {/* Channel link — hidden from public view */}
                           {/* Profile link */}
                           <Link
                             href={`/dashboard/generators/${g.code}`}
@@ -1161,7 +1154,7 @@ export default function ThingsBoardPage() {
                 </div>
                 <div>
                   <p className="text-base font-semibold mb-1" style={{ color: 'var(--text-2)', fontFamily: 'var(--font-ibm-arabic)' }}>
-                    في انتظار بيانات ThingsBoard
+                    في انتظار بيانات الأجهزة
                   </p>
                   <p className="text-sm" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
                     بيانات ThingSpeak الحية تظهر أعلاه — ستظهر هنا بيانات Rule Engine فور الربط
@@ -1169,7 +1162,7 @@ export default function ThingsBoardPage() {
                 </div>
                 <span className="text-xs font-mono px-3 py-1.5 rounded-full"
                       style={{ background: 'rgba(99,102,241,0.1)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.2)' }}>
-                  جدول: generators_live_status
+                  بيانات المولدات
                 </span>
               </div>
             )}
@@ -1282,7 +1275,7 @@ export default function ThingsBoardPage() {
               <div className="flex flex-col lg:flex-row items-center justify-center gap-0">
                 {[
                   { icon: Zap,         label: 'مولد كهربائي',        sub: 'MQTT Client',           color: '#10b981', bg: 'from-emerald-500/20 to-emerald-600/10' },
-                  { icon: Radio,       label: 'ThingsBoard',          sub: 'MQTT Broker + Rule Engine', color: '#6366f1', bg: 'from-indigo-500/20 to-indigo-600/10' },
+                  { icon: Radio,       label: 'وحدة التحكم',           sub: 'معالجة البيانات الحية',      color: '#6366f1', bg: 'from-indigo-500/20 to-indigo-600/10' },
                   { icon: ArrowUpRight,label: 'Edge Function',        sub: 'Supabase Webhook',      color: '#0ea5e9', bg: 'from-sky-500/20 to-sky-600/10'     },
                   { icon: Cpu,         label: 'generators_live_status', sub: 'Supabase DB table',   color: '#a855f7', bg: 'from-purple-500/20 to-purple-600/10' },
                   { icon: BarChart3,   label: 'لوحة التحكم',          sub: 'S.P.G.M.S Dashboard',  color: '#f59e0b', bg: 'from-amber-500/20 to-amber-600/10'   },

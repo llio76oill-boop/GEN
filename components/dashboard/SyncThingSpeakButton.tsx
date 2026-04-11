@@ -73,7 +73,7 @@ export default function SyncThingSpeakButton({ onSynced }: SyncThingSpeakButtonP
       <button
         onClick={handleSync}
         disabled={isLoading}
-        aria-label="مزامنة المولدات مع ThingSpeak"
+        aria-label="مزامنة الأجهزة"
         className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all select-none"
         style={{
           background:   `rgba(${isSuccess ? '16,185,129' : isError ? '239,68,68' : '167,139,250'}, 0.15)`,
@@ -93,7 +93,7 @@ export default function SyncThingSpeakButton({ onSynced }: SyncThingSpeakButtonP
             className={`w-4 h-4 flex-shrink-0 ${isLoading ? 'animate-spin' : ''}`}
           />
         )}
-        {isLoading ? 'جاري المزامنة…' : 'مزامنة مع ThingSpeak'}
+        {isLoading ? 'جاري المزامنة…' : 'مزامنة الأجهزة'}
       </button>
 
       {/* Toast notification */}

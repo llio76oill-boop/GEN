@@ -11,7 +11,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'notifications', label: 'إشعارات'     },
   { key: 'display',       label: 'واجهة'       },
   { key: 'connection',    label: 'الاتصال'     },
-  { key: 'thingsboard',   label: 'ThingsBoard' },
+  { key: 'thingsboard',   label: 'تكامل الأجهزة' },
   { key: 'data',          label: 'البيانات'    },
 ];
 
@@ -191,7 +191,7 @@ function ConnectionTab() {
           { name: 'Supabase Database',    color: '#10b981', dot: 'bg-emerald-400' },
           { name: 'Supabase Realtime',    color: '#10b981', dot: 'bg-emerald-400' },
           { name: 'Edge Functions',       color: '#10b981', dot: 'bg-emerald-400' },
-          { name: 'ThingsBoard MQTT',     color: '#f59e0b', dot: 'bg-amber-400'   },
+          { name: 'بروتوكول الإرسال',     color: '#f59e0b', dot: 'bg-amber-400'   },
         ] as const).map((s) => (
           <div key={s.name} className="flex items-center justify-between py-2 border-b last:border-0"
                style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
@@ -281,7 +281,7 @@ function ThingsBoardTab() {
         <Cpu className="w-5 h-5 text-emerald-400 flex-shrink-0" />
         <div>
           <p className="text-sm font-semibold text-emerald-300" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-            تكامل ThingsBoard مُفعَّل
+          تكامل الأجهزة مُفَعَّل
           </p>
           <p className="text-xs text-gray-400 mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
             Edge Function جاهزة لاستقبال بيانات التلغراف من Rule Engine
@@ -323,7 +323,7 @@ function ThingsBoardTab() {
         )}
 
         <CopyField
-          label="Webhook URL — انسخها في إعدادات ThingsBoard Rule Engine"
+          label="رابط الاستقبال — انسخها في إعدادات النظام"
           value={webhookUrl}
           hint="HTTP POST · Header مطلوب: x-webhook-secret"
         />
@@ -342,9 +342,9 @@ function ThingsBoardTab() {
 
       {/* Server settings */}
       <div className="glass-card p-5 space-y-4">
-        <h3 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>إعدادات خادم ThingsBoard</h3>
+        <h3 className="text-sm font-semibold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>إعدادات الخادم</h3>
         <Field label="Server URL">
-          <TextInput defaultValue="http://thingsboard.anbar-grid.local:8080" />
+          <TextInput defaultValue="http://iot.anbar-grid.local:8080" />
         </Field>
         <Field label="مفتاح المستخدم (Tenant API Token)" hint="من: Account → Profile → JWT Token">
           <TextInput defaultValue="Bearer eyJhbGci…" />
@@ -366,7 +366,7 @@ function ThingsBoardTab() {
 
         <div className="rounded-xl p-3 space-y-1"
              style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}>
-          <p className="text-xs font-semibold text-amber-400" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>⚠ تعليمات الربط في ThingsBoard</p>
+          <p className="text-xs font-semibold text-amber-400" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>⚠ تعليمات الربط</p>
           <ol className="text-[11px] text-gray-400 list-decimal list-inside space-y-0.5 leading-5"
               style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
             <li>افتح Rule Engine → Rule Chains → Root Rule Chain</li>
