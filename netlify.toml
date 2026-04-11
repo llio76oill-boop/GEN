@@ -6,6 +6,13 @@
 [functions]
   node_bundler = "esbuild"
 
+[dev]
+  command = "npx next dev --turbopack"
+  port = 3002
+  targetPort = 3000
+  framework = "next"
+  autoLaunch = false
+
 # Suppress Next.js RSC prefetch 404s on static export
 [[headers]]
   for = "/*/__next.*"
