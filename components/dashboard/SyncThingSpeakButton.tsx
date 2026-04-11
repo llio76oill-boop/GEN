@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 
 type SyncState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -33,25 +32,13 @@ export default function SyncThingSpeakButton({ onSynced }: SyncThingSpeakButtonP
     setToast(null);
 
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke<{
-        ok: boolean;
-        error?: string;
-        inserted: number;
-        updated: number;
-        skipped: number;
-      }>('sync-thingspeak-channels');
+      // Netlify Function — works with static export, no Edge Function deployment needed
+      const res = await fetch('/.netlify/functions/sync-thingspeak', { method: 'POST' });
+      const data = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
 
-      // FunctionsHttpError carries the real body in .context — extract it
-      if (fnErr) {
-        let detail = fnErr.message;
-        try {
-          // @ts-ignore — context is present on FunctionsHttpError
-          const body = await fnErr.context?.json?.();
-          if (body?.error) detail = body.error;
-        } catch { /* use original message */ }
-        throw new Error(detail);
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? `HTTP ${res.status}`);
       }
-      if (!data?.ok) throw new Error(data?.error ?? 'الاستجابة غير صالحة من الدالة');
 
       const summary: SyncSummary = {
         inserted: data.inserted ?? 0,
