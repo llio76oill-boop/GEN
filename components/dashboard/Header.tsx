@@ -4,12 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, Search, Bell, Settings, X, Command, Sun, Moon } from 'lucide-react';
+import { Menu, Search, Bell, Settings, X, Command, Sun, Moon, ALargeSmall } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export default function Header({ onMenuToggle }: { onMenuToggle: () => void }) {
   const [searchOpen, setSearchOpen] = useState(false);
-  const { toggle, isDark } = useTheme();
+  const { toggle, isDark, fontSize, cycleFontSize } = useTheme();
   const router = useRouter();
   const NOTIF_COUNT = 19;
 
@@ -125,6 +125,21 @@ export default function Header({ onMenuToggle }: { onMenuToggle: () => void }) {
         onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-4)'; }}
       >
         {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      </button>
+
+      {/* Font size cycle */}
+      <button
+        onClick={cycleFontSize}
+        className="hidden sm:flex p-2 rounded-xl transition-colors flex-shrink-0 items-center gap-1"
+        style={{ color: 'var(--text-4)' }}
+        title={`حجم الخط: ${fontSize === 'normal' ? 'عادي' : fontSize === 'medium' ? 'متوسط' : 'كبير'}`}
+        onMouseEnter={(e) => { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = 'var(--text-1)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-4)'; }}
+      >
+        <ALargeSmall className="w-5 h-5" />
+        <span className="text-[10px] font-semibold leading-none">
+          {fontSize === 'normal' ? 'A' : fontSize === 'medium' ? 'A+' : 'A++'}
+        </span>
       </button>
 
       {/* Notifications */}

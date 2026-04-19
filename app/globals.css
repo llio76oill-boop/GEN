@@ -34,20 +34,21 @@
   --foreground: #0f172a;
   --surface: rgba(255, 255, 255, 0.80);
   --surface-hover: rgba(255, 255, 255, 0.95);
-  --border: rgba(0, 0, 0, 0.08);
+  --border: rgba(0, 0, 0, 0.10);
 
   --bg-sidebar: rgba(255, 255, 255, 0.97);
-  --bg-header:  rgba(248, 250, 252, 0.92);
-  --bg-card:    rgba(255, 255, 255, 0.88);
+  --bg-header:  rgba(248, 250, 252, 0.96);
+  --bg-card:    rgba(255, 255, 255, 0.92);
   --bg-card-hover: rgba(255, 255, 255, 1);
-  --bg-nav-hover:  rgba(0, 0, 0, 0.04);
-  --border-subtle: rgba(0, 0, 0, 0.07);
-  --border-normal: rgba(0, 0, 0, 0.09);
-  --text-1: #0f172a;
+  --bg-nav-hover:  rgba(0, 0, 0, 0.05);
+  --border-subtle: rgba(0, 0, 0, 0.09);
+  --border-normal: rgba(0, 0, 0, 0.12);
+  /* stronger text hierarchy so nothing disappears on white */
+  --text-1: #0a0f1e;
   --text-2: #1e293b;
-  --text-3: #475569;
-  --text-4: #64748b;
-  --text-5: #94a3b8;
+  --text-3: #334155;
+  --text-4: #475569;
+  --text-5: #64748b;
 }
 
 @theme inline {
@@ -79,8 +80,10 @@ body {
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 100px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 100px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
 @layer utilities {
   .glass {

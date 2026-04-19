@@ -30,13 +30,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "S.P.G.M.S — نظام إدارة الشبكة الكهربائية الذكية",
-  description: "Smart Power Grid Management System — نظام إدارة أحمال 3,000 مولد كهربائي",
+  title: "S.G.M — نظام إدارة الشبكة الكهربائية الذكية",
+  description: "Smart Grid Management — نظام إدارة أحمال 3,000 مولد كهربائي",
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'S.P.G.M.S',
+    title: 'S.G.M',
   },
   other: {
     'mobile-web-app-capable': 'yes',

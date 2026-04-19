@@ -58,7 +58,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
           transition={{ duration: 0.2 }}
           className="overflow-hidden whitespace-nowrap"
         >
-          <p className="text-sm font-semibold leading-none mb-0.5" style={{ color: 'var(--text-1)' }}>S.P.G.M.S</p>
+          <p className="text-sm font-semibold leading-none mb-0.5" style={{ color: 'var(--text-1)' }}>S.G.M</p>
           <p className="text-[10px]" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
             إدارة الطاقة الذكية
           </p>
