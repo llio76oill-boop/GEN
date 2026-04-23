@@ -286,7 +286,7 @@ export default function GeneratorsPage() {
                   </td>
                   <td className="px-4 py-2.5 font-mono text-[var(--text-3)]">{gen.power}</td>
                   <td className="px-4 py-2.5 text-[var(--text-4)]">
-                    {gen.hours.toLocaleString()}
+                    {gen.hours.toLocaleString('en-US')}
                   </td>
                   <td className="px-4 py-2.5">
                     <Link

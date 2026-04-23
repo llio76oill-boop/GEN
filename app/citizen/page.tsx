@@ -228,7 +228,7 @@ function BillingInquiry() {
   }, [bill?.id]);
 
   const statusMeta = bill ? billStatusMeta(bill.status as 'pending' | 'paid' | 'overdue') : null;
-  const monthLabel = new Date().toLocaleDateString('ar-IQ', { month: 'long', year: 'numeric' });
+  const monthLabel = new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 
   return (
     <div className="space-y-4">
@@ -333,11 +333,11 @@ function BillingInquiry() {
                   </div>
                   <div className="flex justify-between text-xs" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
                     <span>الاستهلاك</span>
-                    <span className="font-medium font-mono" style={{ color: 'var(--text-2)' }}>{bill.amps} A × {bill.price_per_amp.toLocaleString()} د.ع.</span>
+                    <span className="font-medium font-mono" style={{ color: 'var(--text-2)' }}>{bill.amps} A × {bill.price_per_amp.toLocaleString('en-US')} د.ع.</span>
                   </div>
                   <div className="flex justify-between text-xs" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
                     <span>عمولة الخدمة</span>
-                    <span className="font-medium font-mono" style={{ color: 'var(--text-2)' }}>{bill.commission.toLocaleString()} د.ع.</span>
+                    <span className="font-medium font-mono" style={{ color: 'var(--text-2)' }}>{bill.commission.toLocaleString('en-US')} د.ع.</span>
                   </div>
                   <div className="h-px" style={{ background: 'var(--border-subtle)' }} />
                   <div className="flex justify-between items-center">
@@ -772,9 +772,9 @@ export default function CitizenPortal() {
                               ساعات التشغيل
                             </span>
                           </div>
-                          <p className="text-2xl font-bold text-emerald-400">{opHours.toLocaleString('ar-EG')}</p>
+                          <p className="text-2xl font-bold text-emerald-400">{opHours.toLocaleString('en-US')}</p>
                           <p className="text-[10px]" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
-                            من أصل {YEAR_HOURS.toLocaleString('ar-EG')} ساعة/سنة
+                            من أصل {YEAR_HOURS.toLocaleString('en-US')} ساعة/سنة
                           </p>
                         </div>
 
@@ -789,7 +789,7 @@ export default function CitizenPortal() {
                               ساعات الانقطاع
                             </span>
                           </div>
-                          <p className="text-2xl font-bold text-red-400">{(YEAR_HOURS - opHours).toLocaleString('ar-EG')}</p>
+                          <p className="text-2xl font-bold text-red-400">{(YEAR_HOURS - opHours).toLocaleString('en-US')}</p>
                           <p className="text-[10px]" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
                             نسبة الانقطاع: {100 - pct}%
                           </p>

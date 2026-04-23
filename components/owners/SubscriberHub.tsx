@@ -92,7 +92,7 @@ function LiveRibbon({ meta }: { meta: OwnerMeta | null }) {
     },
     {
       label: 'ساعات التشغيل',
-      value: meta.totalHours.toLocaleString('ar-IQ'),
+      value: meta.totalHours.toLocaleString('en-US'),
       color: '#3b82f6',
       icon: Clock,
       pulse: false,
@@ -742,7 +742,7 @@ function ExportMenu({ subs }: { subs: SubRow[] }) {
     const rows = subs.map((s) =>
       [s.sub_code, s.full_name, s.amps, s.sub_type === 'residential' ? 'سكني' : 'تجاري',
        s.phone ?? '', s.whatsapp ?? '', s.address ?? '', s.active ? 'نشط' : 'معلق',
-       new Date(s.created_at).toLocaleDateString('ar-IQ')].join(',')
+       new Date(s.created_at).toLocaleDateString('en-GB')].join(',')
     );
     const csv = '\uFEFF' + [headers, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });

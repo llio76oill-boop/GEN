@@ -257,7 +257,7 @@ export default function GeneratorRecordPage() {
             )}
           </div>
           <p className="text-sm" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
-            {r.area} — محافظة الأنبار&nbsp;&nbsp;•&nbsp;&nbsp;{r.power} كيلوواط&nbsp;&nbsp;•&nbsp;&nbsp;{r.hours.toLocaleString('ar-IQ')} ساعة
+            {r.area} — محافظة الأنبار&nbsp;&nbsp;•&nbsp;&nbsp;{r.power} كيلوواط&nbsp;&nbsp;•&nbsp;&nbsp;{r.hours.toLocaleString('en-US')} ساعة
           </p>
           {r.owner_name && (
             <p className="text-xs mt-0.5 flex items-center gap-1.5" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>
@@ -314,9 +314,9 @@ export default function GeneratorRecordPage() {
                   </p>
                   <InfoRow icon={Zap}       label="القدرة الكهربائية"      value={`${r.power} kW`}                                          color="#10b981" />
                   <InfoRow icon={Activity}  label="السعة الكاملة (أمبير)" value={`${r.capacity_amps ?? 0} A`}                              color="#3b82f6" />
-                  <InfoRow icon={Clock}     label="ساعات التشغيل الكلية"   value={`${r.hours.toLocaleString('ar-IQ')} ساعة`}              color="#6366f1" />
-                  <InfoRow icon={Fuel}      label="حصة الوقود الشهرية"     value={`${(r.fuel_quota ?? 0).toLocaleString('ar-IQ')} لتر`}   color="#f59e0b" />
-                  <InfoRow icon={BarChart3} label="سعر الأمبير الواحد"     value={`${Number(r.price_per_amp ?? 0).toLocaleString('ar-IQ')} د.ع`} color="#a855f7" />
+                  <InfoRow icon={Clock}     label="ساعات التشغيل الكلية"   value={`${r.hours.toLocaleString('en-US')} ساعة`}              color="#6366f1" />
+                  <InfoRow icon={Fuel}      label="حصة الوقود الشهرية"     value={`${(r.fuel_quota ?? 0).toLocaleString('en-US')} لتر`}   color="#f59e0b" />
+                  <InfoRow icon={BarChart3} label="سعر الأمبير الواحد"     value={`${Number(r.price_per_amp ?? 0).toLocaleString('en-US')} د.ع`} color="#a855f7" />
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -476,7 +476,7 @@ export default function GeneratorRecordPage() {
                             </span>
                           </td>
                           <td className="px-3 py-2.5 text-xs font-mono" style={{ color: '#10b981' }}>
-                            {Number(s.monthly_fee).toLocaleString('ar-IQ')} د.ع
+                            {Number(s.monthly_fee).toLocaleString('en-US')} د.ع
                           </td>
                           <td className="px-3 py-2.5">
                             <span className="text-[10px] flex items-center gap-1"
@@ -527,7 +527,7 @@ export default function GeneratorRecordPage() {
                   })}
                 </div>
                 <button onClick={() => exportCSV(filteredLogs.map(l => ({
-                  التاريخ: new Date(l.logged_at).toLocaleString('ar-IQ'),
+                  التاريخ: new Date(l.logged_at).toLocaleString('en-US'),
                   الحدث:   EVENT_CFG[l.event as keyof typeof EVENT_CFG]?.label ?? l.event,
                   ملاحظة:  l.note??'', وقود_مضاف: l.fuel_added??0, بواسطة: l.logged_by,
                 })), `logs-gen-${r.id}.csv`)}
@@ -541,7 +541,7 @@ export default function GeneratorRecordPage() {
                 <KpiCard label="ساعات التشغيل"   value={`${stats.runningHours.toFixed(1)}h`}  color="#10b981" icon={Clock}   sub="في الفترة المحددة" />
                 <KpiCard label="جلسات التشغيل"   value={stats.starts}                          color="#3b82f6" icon={Zap}     sub="مرة تشغيل" />
                 <KpiCard label="مرات الإيقاف"    value={stats.stops}                           color="#6b7280" icon={WifiOff} sub="مرة إيقاف" />
-                <KpiCard label="وقود مضاف"        value={`${stats.fuelAdded.toLocaleString('ar-IQ')} L`} color="#f59e0b" icon={Droplets} sub="لتر" />
+                <KpiCard label="وقود مضاف"        value={`${stats.fuelAdded.toLocaleString('en-US')} L`} color="#f59e0b" icon={Droplets} sub="لتر" />
               </div>
 
               <div className="glass-card overflow-hidden">
@@ -584,7 +584,7 @@ export default function GeneratorRecordPage() {
                               )}
                             </div>
                             <p className="text-[10px] mt-0.5" style={{ color:'var(--text-5)', fontFamily:'var(--font-ibm-arabic)' }}>
-                              {d.toLocaleDateString('ar-IQ')} — {d.toLocaleTimeString('ar-IQ',{hour:'2-digit',minute:'2-digit'})}
+                              {d.toLocaleDateString('en-GB')} — {d.toLocaleTimeString('ar-IQ',{hour:'2-digit',minute:'2-digit'})}
                               &nbsp;•&nbsp; {log.logged_by}
                             </p>
                           </div>
@@ -601,13 +601,13 @@ export default function GeneratorRecordPage() {
           {tab === 'stats' && (
             <div className="space-y-5">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                <KpiCard label="إجمالي ساعات التشغيل"    value={r.hours.toLocaleString('ar-IQ')}      color="#10b981" icon={Clock}     sub="ساعة منذ التشغيل" />
+                <KpiCard label="إجمالي ساعات التشغيل"    value={r.hours.toLocaleString('en-US')}      color="#10b981" icon={Clock}     sub="ساعة منذ التشغيل" />
                 <KpiCard label="إجمالي المشتركين"         value={stats.totalSubs}                      color="#a855f7" icon={Users}     sub={`${stats.activeSubs} نشط`} />
                 <KpiCard label="الأمبيرات المباعة"        value={`${stats.totalAmps} A`}               color="#3b82f6" icon={Zap}       sub={`من ${r.capacity_amps ?? 0} A`} />
                 <KpiCard label="نسبة الاستخدام"           value={`${stats.usedPct}%`}                  color={stats.usedPct>90?'#ef4444':stats.usedPct>70?'#f59e0b':'#10b981'} icon={Activity} sub="من السعة الكاملة" />
                 <KpiCard label="الإيراد الشهري التقديري"  value={`${Math.round(stats.monthlyRev/1000)}k`} color="#10b981" icon={BarChart3} sub="ألف دينار عراقي" />
-                <KpiCard label="سعر الأمبير الواحد"       value={Number(r.price_per_amp??0).toLocaleString('ar-IQ')} color="#f59e0b" icon={Zap} sub="دينار / أمبير" />
-                <KpiCard label="حصة الوقود الشهرية"       value={`${(r.fuel_quota??0).toLocaleString('ar-IQ')} L`} color="#f97316" icon={Droplets} sub="لتر في الشهر" />
+                <KpiCard label="سعر الأمبير الواحد"       value={Number(r.price_per_amp??0).toLocaleString('en-US')} color="#f59e0b" icon={Zap} sub="دينار / أمبير" />
+                <KpiCard label="حصة الوقود الشهرية"       value={`${(r.fuel_quota??0).toLocaleString('en-US')} L`} color="#f97316" icon={Droplets} sub="لتر في الشهر" />
                 <KpiCard label="القدرة الكهربائية"         value={`${r.power} kW`}                     color="#6366f1" icon={Zap}       sub="كيلوواط" />
               </div>
 
@@ -652,7 +652,7 @@ export default function GeneratorRecordPage() {
                           <p className="text-xs font-medium" style={{ color:'var(--text-2)', fontFamily:'var(--font-ibm-arabic)' }}>{label}</p>
                           <p className="text-[10px]" style={{ color:'var(--text-5)', fontFamily:'var(--font-ibm-arabic)' }}>{subs.length} مشترك · {amps} A</p>
                         </div>
-                        <p className="text-sm font-bold font-mono" style={{ color }}>{Math.round(rev/1000).toLocaleString('ar-IQ')}k</p>
+                        <p className="text-sm font-bold font-mono" style={{ color }}>{Math.round(rev/1000).toLocaleString('en-US')}k</p>
                       </div>
                     );
                   })}
@@ -715,7 +715,7 @@ export default function GeneratorRecordPage() {
                     )}
 
                     <p className="text-[11px] text-center" style={{ color:'var(--text-5)', fontFamily:'var(--font-ibm-arabic)' }}>
-                      آخر تحديث: {new Date(t.timestamp).toLocaleString('ar-IQ')} &nbsp;•&nbsp; {t.device_id}
+                      آخر تحديث: {new Date(t.timestamp).toLocaleString('en-US')} &nbsp;•&nbsp; {t.device_id}
                     </p>
                   </div>
                 );

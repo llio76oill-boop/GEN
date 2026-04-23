@@ -20,7 +20,7 @@ function Counter({ to, duration = 1.4 }: { to: number; duration?: number }) {
     requestAnimationFrame(raf);
     return () => { t0.current = null; };
   }, [to, duration]);
-  return <>{v.toLocaleString('ar-EG')}</>;
+  return <>{v.toLocaleString('en-US')}</>;
 }
 
 /* ?? Tiny area sparkline ?? */
@@ -185,7 +185,7 @@ export default function KPIGrid() {
         ))}
         <p className="text-[10px] text-[var(--text-4)] mt-2"
            style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-          من إجمالي {stats.totalGenerators.toLocaleString()} مولد
+          من إجمالي {stats.totalGenerators.toLocaleString('en-US')} مولد
         </p>
       </motion.div>
 

@@ -88,7 +88,7 @@ function PendingCard({ gen }: { gen: PendingGenerator }) {
               <Users className="w-3 h-3" /> {gen.pending_operators?.length || 0} مشغل
             </span>
             <span className="text-xs" style={{ color: 'var(--text-5)' }}>
-              {new Date(gen.created_at).toLocaleDateString('ar-IQ')}
+              {new Date(gen.created_at).toLocaleDateString('en-GB')}
             </span>
           </div>
         </div>
@@ -117,7 +117,7 @@ function PendingCard({ gen }: { gen: PendingGenerator }) {
                 </div>
                 <div className="text-xs">
                   <span style={{ color: 'var(--text-5)' }}>حصة الوقود: </span>
-                  <span style={{ color: 'var(--text-2)' }}>{gen.fuel_quota.toLocaleString()} لتر</span>
+                  <span style={{ color: 'var(--text-2)' }}>{gen.fuel_quota.toLocaleString('en-US')} لتر</span>
                 </div>
                 <div className="text-xs">
                   <span style={{ color: 'var(--text-5)' }}>التسعيرة: </span>

@@ -34,7 +34,7 @@ export function calcBillTotal(amps: number, pricePerAmp: number, commission = 50
 
 /** Format IQD amount with Arabic locale, e.g. 50,500 د.ع. */
 export function formatIQD(amount: number): string {
-  return `${amount.toLocaleString('ar-IQ')} د.ع.`;
+  return `${amount.toLocaleString('en-US')} د.ع.`;
 }
 
 /** Returns Tailwind-compatible status color and Arabic label for a bill status */

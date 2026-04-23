@@ -373,7 +373,7 @@ function OwnerCard({ owner }: { owner: OwnerRow }) {
               </span>
             )}
             <span className="text-xs" style={{ color: 'var(--text-5)' }}>
-              {totalPower.toLocaleString()} KW إجمالي
+              {totalPower.toLocaleString('en-US')} KW إجمالي
             </span>
           </div>
         </div>

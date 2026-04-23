@@ -54,7 +54,7 @@ export default function ProgramHeader() {
             className="text-[11px] font-medium"
             style={{ color: '#10b981', fontFamily: 'var(--font-ibm-arabic)' }}
           >
-            {loading ? '…' : online.toLocaleString()} متصل الآن
+            {loading ? '…' : online.toLocaleString('en-US')} متصل الآن
           </span>
         </div>
       </div>
@@ -83,7 +83,7 @@ export default function ProgramHeader() {
               </div>
               <div>
                 <p className="text-lg font-bold leading-none" style={{ color: b.color }}>
-                  {loading ? '—' : b.value.toLocaleString()}
+                  {loading ? '—' : b.value.toLocaleString('en-US')}
                 </p>
                 <p
                   className="text-[10px] mt-0.5"

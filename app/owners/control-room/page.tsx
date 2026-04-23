@@ -37,7 +37,7 @@ function formatTime(totalSeconds: number): { h: string; m: string; s: string } {
 }
 
 function formatCurrency(amount: number): string {
-  return amount.toLocaleString('ar-IQ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 /* ── Arc Gauge Component ── */
@@ -147,7 +147,7 @@ export default function ControlRoomPage() {
         const v = parseFloat(json.field1 ?? '0');
         setVoltage(isNaN(v) ? null : v);
         if (json.created_at) {
-          setLastVoltageTime(new Date(json.created_at).toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' }));
+          setLastVoltageTime(new Date(json.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
         }
       })
       .catch(() => setVoltage(null))
@@ -535,7 +535,7 @@ export default function ControlRoomPage() {
                 <div className="flex justify-between text-xs">
                   <span style={{ color: 'var(--text-4)' }}>المتبقي</span>
                   <span className="font-bold tabular-nums font-mono" dir="ltr" style={{ color: fuelPct > 0.3 ? '#10b981' : fuelPct > 0.1 ? '#f97316' : '#ef4444' }}>
-                    {Math.round(fuelRemaining).toLocaleString()} لتر
+                    {Math.round(fuelRemaining).toLocaleString('en-US')} لتر
                   </span>
                 </div>
                 <div className="h-3 rounded-full overflow-hidden" style={{ background: 'var(--border-subtle)' }}>
@@ -554,7 +554,7 @@ export default function ControlRoomPage() {
                   />
                 </div>
                 <div className="flex justify-between text-[10px]" style={{ color: 'var(--text-5)' }}>
-                  <span>الحصة: {fuelQuotaTotal.toLocaleString()} لتر</span>
+                  <span>الحصة: {fuelQuotaTotal.toLocaleString('en-US')} لتر</span>
                   <span>المستهلك: {Math.round(fuelConsumed)} لتر</span>
                 </div>
               </div>

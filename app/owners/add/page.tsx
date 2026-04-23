@@ -564,7 +564,7 @@ export default function AddGeneratorPage() {
                       <div>
                         <p className="text-xs mb-1" style={{ color: 'var(--text-4)' }}>الحصة الشهرية</p>
                         <p className="text-lg font-bold" style={{ color: 'var(--text-1)' }} dir="ltr">
-                          {(fuelQuota || 0).toLocaleString()} <span className="text-xs font-normal" style={{ color: 'var(--text-4)' }}>لتر</span>
+                          {(fuelQuota || 0).toLocaleString('en-US')} <span className="text-xs font-normal" style={{ color: 'var(--text-4)' }}>لتر</span>
                         </p>
                       </div>
                     </div>

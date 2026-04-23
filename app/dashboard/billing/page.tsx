@@ -176,7 +176,7 @@ function BulkUpdateModal({
                 <span className="text-xs" style={{ color: 'var(--text-3)', fontFamily: 'var(--font-ibm-arabic)' }}>{r.region_name}</span>
               </div>
               <span className="text-xs tabular-nums" style={{ color: 'var(--text-4)' }}>
-                {r.price_per_amp.toLocaleString('ar-IQ')} د.ع.
+                {r.price_per_amp.toLocaleString('en-US')} د.ع.
               </span>
             </label>
           ))}
@@ -207,7 +207,7 @@ function BulkUpdateModal({
           </div>
           {selected.size > 0 && (
             <p className="text-xs text-emerald-400" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-              سيتم تطبيق {newPrice.toLocaleString('ar-IQ')} د.ع. على {selected.size} منطقة
+              سيتم تطبيق {newPrice.toLocaleString('en-US')} د.ع. على {selected.size} منطقة
             </p>
           )}
         </div>

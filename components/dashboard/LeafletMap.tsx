@@ -96,7 +96,7 @@ export default function LeafletMap() {
                   <span>القدرة المركبة</span>
                   <span style={{ color: '#e2e8f0', fontFamily: 'monospace' }}>{gen.power} kW</span>
                   <span>ساعات التشغيل</span>
-                  <span style={{ color: '#e2e8f0', fontFamily: 'monospace' }}>{gen.hours.toLocaleString()} ساعة</span>
+                  <span style={{ color: '#e2e8f0', fontFamily: 'monospace' }}>{gen.hours.toLocaleString('en-US')} ساعة</span>
                   <span>الرقم</span>
                   <span style={{ color: '#e2e8f0', fontFamily: 'monospace' }}>{tele?.device_id ?? `G-${String(gen.id).padStart(3,'0')}`}</span>
                 </div>
