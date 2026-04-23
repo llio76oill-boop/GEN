@@ -175,7 +175,7 @@ export default function OwnersPortalPage() {
           {/* Footer */}
           <div className="mt-8 pt-5 text-center" style={{ borderTop: '1px solid var(--border-subtle)' }}>
             <p className="text-[10px] tracking-widest uppercase" style={{ color: 'var(--text-5)' }}>
-              S.P.G.M.S &nbsp;•&nbsp; بوابة أصحاب المولدات
+              S.G.M &nbsp;•&nbsp; بوابة أصحاب المولدات
             </p>
           </div>
         </div>

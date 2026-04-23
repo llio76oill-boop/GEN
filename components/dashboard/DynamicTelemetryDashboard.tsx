@@ -509,7 +509,7 @@ export default function DynamicTelemetryDashboard({
              style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.08)' }}>
           <WifiOff className="w-5 h-5" style={{ color: 'var(--text-5)' }} />
           <p className="text-sm" style={{ color: 'var(--text-4)', fontFamily: 'var(--font-ibm-arabic)' }}>
-            لم يُربط بقناة ThingSpeak
+            لم يُربط بقناة بيانات حية
           </p>
         </div>
       )}

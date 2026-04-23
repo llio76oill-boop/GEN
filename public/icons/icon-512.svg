@@ -3,7 +3,7 @@
   <rect x="6" y="6" width="500" height="500" rx="90" fill="none" stroke="rgba(16,185,129,0.15)" stroke-width="2"/>
   <path d="M320 96L192 272h80L224 416l176-192H304z" fill="#10b981"/>
   <path d="M320 96L192 272h80L224 416l176-192H304z" fill="url(#g)" opacity="0.4"/>
-  <text x="256" y="470" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="32" font-family="sans-serif" font-weight="600">S.P.G.M.S</text>
+  <text x="256" y="470" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="32" font-family="sans-serif" font-weight="600">S.G.M</text>
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#34d399"/>

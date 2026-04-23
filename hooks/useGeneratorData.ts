@@ -66,8 +66,8 @@ export function useGeneratorData(generatorId: string | number): UseGeneratorData
     setErrorProfile(null);
 
     (async () => {
-      // Try to fetch by code (e.g. "G-0042") or numeric id
-      const isCode = typeof generatorId === 'string' && generatorId.startsWith('G-');
+      // Try by code string first (e.g. "Genrator 1"), otherwise by numeric id
+      const isNumeric = !isNaN(Number(generatorId));
 
       const { data, error } = await supabase
         .from('owned_generators')
@@ -91,10 +91,40 @@ export function useGeneratorData(generatorId: string | number): UseGeneratorData
             owned_since
           )
         `)
-        .eq(isCode ? 'code' : 'id', generatorId)
+        .eq(isNumeric ? 'id' : 'code', isNumeric ? Number(generatorId) : generatorId)
         .single();
 
       if (error || !data) {
+        // Fallback: fetch basic info from generators table
+        if (isNumeric) {
+          const { data: gen } = await supabase
+            .from('generators')
+            .select('id, area, power, status, hours, lat, lng')
+            .eq('id', Number(generatorId))
+            .single();
+          if (gen) {
+            setProfile({
+              id:                    gen.id,
+              code:                  `GEN-${String(gen.id).padStart(3, '0')}`,
+              area:                  gen.area,
+              power:                 gen.power,
+              status:                gen.status as GeneratorProfile['status'],
+              total_hours:           gen.hours,
+              license_number:        null,
+              address:               null,
+              monthly_fuel_quota:    null,
+              thingspeak_channel_id: null,
+              thingspeak_read_key:   null,
+              thingspeak_fields_map: null,
+              owner_name:            '—',
+              owner_phone:           '—',
+              owner_initials:        '—',
+              owned_since:           '—',
+            });
+            setLoadingProfile(false);
+            return;
+          }
+        }
         setErrorProfile(error?.message ?? 'المولد غير موجود');
         setLoadingProfile(false);
         return;

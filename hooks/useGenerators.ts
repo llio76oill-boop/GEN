@@ -42,6 +42,7 @@ export function useGenerators() {
     supabase
       .from('generators')
       .select('id, lat, lng, status, power, area, hours')
+      .order('id')
       .then(({ data }) => {
         setGenerators((data ?? []) as Generator[]);
         setLoading(false);

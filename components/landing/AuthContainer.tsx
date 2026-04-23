@@ -118,7 +118,7 @@ export default function AuthContainer({ onPortalClick, activePortal, isDark = tr
             className="text-[11px] tracking-widest uppercase transition-colors"
             style={{ color: textSub }}
           >
-            S.P.G.M.S &nbsp;•&nbsp; 3,000 Generator Network
+            S.G.M &nbsp;•&nbsp; 3,000 Generator Network
           </motion.p>
         </div>
 

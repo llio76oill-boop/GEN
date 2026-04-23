@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Map, Zap, Activity,
-  LayoutGrid, Bell, BarChart3, Users, Cpu, Gauge,
+  LayoutGrid, Bell, BarChart3, Users, Cpu,
   ShieldCheck, FileText, Settings, Globe, DollarSign, X,
 } from 'lucide-react';
 
@@ -22,7 +22,7 @@ const MORE_ITEMS = [
   { icon: BarChart3,   label: 'التحليلات',              href: '/dashboard/analytics' },
   { icon: DollarSign,  label: 'الفواتير والتسعير',      href: '/dashboard/billing' },
   { icon: Cpu,         label: 'مركز بيانات',            href: '/dashboard/thingsboard', badge: 'LIVE' as const },
-  { icon: Gauge,       label: 'القيادة والسيطرة',       href: '/dashboard/thingspeak',  badge: 'LIVE' as const },
+
   { icon: Bell,        label: 'الإشعارات',              href: '/dashboard/notifications', badge: 12 },
   { icon: ShieldCheck, label: 'الأمان',                 href: '/dashboard/security' },
   { icon: FileText,    label: 'التوثيق',                href: '/dashboard/docs' },

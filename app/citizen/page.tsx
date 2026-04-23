@@ -1,13 +1,19 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Search, Clock, WifiOff, AlertTriangle, Send, X, CheckCircle2, ExternalLink, ReceiptText, DollarSign } from 'lucide-react';
+import { Zap, Search, Clock, WifiOff, AlertTriangle, Send, X, CheckCircle2, ExternalLink, ReceiptText, DollarSign, Home, Briefcase, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { STATUS_COLOR, STATUS_LABEL, STATUS_BG, type GeneratorStatus } from '@/data/generators';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
 import { obfuscateArabicName, formatIQD, billStatusMeta } from '@/lib/obfuscate';
+
+const QRCodeSVG = dynamic(
+  () => import('qrcode.react').then((m) => m.QRCodeSVG),
+  { ssr: false, loading: () => <div className="w-[100px] h-[100px] bg-white/10 rounded-xl animate-pulse" /> }
+);
 
 const YEAR_HOURS = 8760;
 
@@ -161,9 +167,14 @@ function ReportModal({ code, onClose, onSubmit }: ReportModal) {
 }
 
 /* ── Billing lookup types ── */
-interface Subscriber { id: number; sub_code: string; full_name: string; region_id: string; amps: number; }
+interface Subscriber {
+  id: number; sub_code: string; full_name: string; region_id: string; amps: number;
+  phone?: string; whatsapp?: string; address?: string;
+  sub_type?: 'residential' | 'commercial'; active?: boolean; owned_gen_id?: number | null;
+}
 interface RegionPricing { region_id: string; region_name: string; price_per_amp: number; commission: number; }
 interface Bill { id: number; status: string; total_iqd: number; month_label: string; amps: number; price_per_amp: number; commission: number; }
+interface GenMeta { genCode: string; genArea: string; ownerName: string; }
 
 /* ── Billing inquiry panel ── */
 function BillingInquiry() {
@@ -173,11 +184,13 @@ function BillingInquiry() {
   const [subscriber, setSubscriber] = useState<Subscriber | null>(null);
   const [region, setRegion]       = useState<RegionPricing | null>(null);
   const [bill, setBill]           = useState<Bill | null>(null);
+  const [genMeta, setGenMeta]     = useState<GenMeta | null>(null);
+  const [showCard, setShowCard]   = useState(false);
 
   const lookup = useCallback(async () => {
     const code = subCode.trim().toUpperCase();
     if (!code) return;
-    setLoading(true); setError(''); setSubscriber(null); setRegion(null); setBill(null);
+    setLoading(true); setError(''); setSubscriber(null); setRegion(null); setBill(null); setGenMeta(null); setShowCard(false);
 
     const { data: sub, error: subErr } = await supabase
       .from('subscribers').select('*').eq('sub_code', code).single();
@@ -191,6 +204,16 @@ function BillingInquiry() {
     ]);
     setRegion(reg ?? null);
     setBill(bills ?? null);
+
+    if (sub.owned_gen_id) {
+      const { data: og } = await supabase
+        .from('owned_generators')
+        .select('code, area, owner_id, owners(name)')
+        .eq('id', sub.owned_gen_id)
+        .single() as { data: { code: string; area: string; owners: { name: string } | null } | null };
+      if (og) setGenMeta({ genCode: og.code, genArea: og.area, ownerName: og.owners?.name ?? '—' });
+    }
+
     setLoading(false);
   }, [subCode]);
 
@@ -367,6 +390,148 @@ function BillingInquiry() {
                 </p>
               </div>
             )}
+
+            {/* Digital ID card button */}
+            <button
+              onClick={() => setShowCard(true)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-bold transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))',
+                border: '1px solid rgba(139,92,246,0.3)',
+                color: '#a78bfa',
+                fontFamily: 'var(--font-ibm-arabic)',
+              }}
+            >
+              <CreditCard className="w-4 h-4" />
+              عرض البطاقة الرقمية
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Digital ID Card Modal */}
+      <AnimatePresence>
+        {showCard && subscriber && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setShowCard(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+              className="w-full max-w-sm"
+              dir="rtl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-sm font-bold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>البطاقة الرقمية للمشترك</h2>
+                <button onClick={() => setShowCard(false)} className="p-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* The card */}
+              <div
+                className="rounded-3xl overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 45%, #1e3a5f 100%)',
+                  border: '1px solid rgba(167,139,250,0.25)',
+                  boxShadow: '0 25px 60px rgba(99,102,241,0.3)',
+                }}
+              >
+                {/* Header */}
+                <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] tracking-widest uppercase font-bold" style={{ color: 'rgba(167,139,250,0.7)' }}>S.G.M</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: 'rgba(196,181,253,0.8)', fontFamily: 'var(--font-ibm-arabic)' }}>نظام إدارة الشبكة الكهربائية</p>
+                  </div>
+                  <div
+                    className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5"
+                    style={{
+                      background: subscriber.active !== false ? 'rgba(16,185,129,0.2)' : 'rgba(107,114,128,0.2)',
+                      color: subscriber.active !== false ? '#10b981' : '#9ca3af',
+                      border: `1px solid ${subscriber.active !== false ? 'rgba(16,185,129,0.3)' : 'rgba(107,114,128,0.3)'}`,
+                    }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: subscriber.active !== false ? '#10b981' : '#9ca3af' }} />
+                    {subscriber.active !== false ? 'نشط' : 'معلق'}
+                  </div>
+                </div>
+
+                {/* QR + info */}
+                <div className="px-5 py-3 flex gap-4 items-start">
+                  <div className="p-2 rounded-2xl flex-shrink-0" style={{ background: 'rgba(255,255,255,0.95)', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+                    <QRCodeSVG
+                      value={`SGM:${subscriber.sub_code}:${subscriber.full_name}`}
+                      size={100}
+                      bgColor="transparent"
+                      fgColor="#1e1b4b"
+                      level="M"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0 pt-1">
+                    <p className="text-base font-bold leading-snug" style={{ color: '#fff', fontFamily: 'var(--font-ibm-arabic)' }}>
+                      {subscriber.full_name}
+                    </p>
+                    <p className="text-xl font-black mt-1 font-mono tracking-wider" style={{ color: '#a78bfa' }} dir="ltr">
+                      {subscriber.sub_code}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      {subscriber.sub_type === 'commercial'
+                        ? <Briefcase className="w-3 h-3" style={{ color: 'rgba(196,181,253,0.7)' }} />
+                        : <Home className="w-3 h-3" style={{ color: 'rgba(196,181,253,0.7)' }} />
+                      }
+                      <span className="text-xs" style={{ color: 'rgba(196,181,253,0.8)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                        {subscriber.sub_type === 'commercial' ? 'اشتراك تجاري' : 'اشتراك سكني'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mx-5 border-t" style={{ borderColor: 'rgba(167,139,250,0.15)' }} />
+
+                {/* Details grid */}
+                <div className="px-5 py-3 grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'عدد الأمبيرات', value: `${subscriber.amps} A`, color: '#60a5fa' },
+                    { label: 'رقم الاتصال',   value: subscriber.phone ?? '—',      color: '#34d399' },
+                    { label: 'المولد',         value: genMeta?.genCode ?? '—',      color: '#f59e0b' },
+                    { label: 'المنطقة',        value: genMeta?.genArea ?? (region?.region_name ?? '—'), color: '#a78bfa' },
+                  ].map((item) => (
+                    <div key={item.label}>
+                      <p className="text-[9px] uppercase tracking-wide mb-0.5" style={{ color: 'rgba(196,181,253,0.5)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                        {item.label}
+                      </p>
+                      <p className="text-xs font-bold" style={{ color: item.color, fontFamily: item.label === 'المولد' ? 'var(--font-sans)' : 'var(--font-ibm-arabic)' }} dir={item.label === 'المولد' ? 'ltr' : undefined}>
+                        {item.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Footer */}
+                <div className="px-5 py-3 flex items-center justify-between" style={{ background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(167,139,250,0.1)' }}>
+                  <div>
+                    <p className="text-[9px]" style={{ color: 'rgba(196,181,253,0.5)', fontFamily: 'var(--font-ibm-arabic)' }}>صاحب المولد</p>
+                    <p className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                      {genMeta?.ownerName ?? '—'}
+                    </p>
+                  </div>
+                  <div className="text-start">
+                    <p className="text-[9px]" style={{ color: 'rgba(196,181,253,0.5)', fontFamily: 'var(--font-ibm-arabic)' }}>العنوان</p>
+                    <p className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--font-ibm-arabic)' }}>
+                      {subscriber.address ?? genMeta?.genArea ?? '—'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -443,7 +608,7 @@ export default function CitizenPortal() {
             <Zap className="w-4 h-4 text-emerald-400" />
           </div>
           <div>
-            <p className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>S.P.G.M.S</p>
+            <p className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>S.G.M</p>
             <p className="text-[10px]" style={{ color: 'var(--text-5)', fontFamily: 'var(--font-ibm-arabic)' }}>بوابة المواطن</p>
           </div>
         </div>

@@ -541,7 +541,7 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>الإعدادات</h1>
-          <p className="text-sm text-gray-500 mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>تخصيص وإعداد نظام S.P.G.M.S</p>
+          <p className="text-sm text-gray-500 mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>تخصيص وإعداد نظام S.G.M</p>
         </div>
         <button
           onClick={save}

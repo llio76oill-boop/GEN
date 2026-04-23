@@ -1866,7 +1866,7 @@ export default function ThingsBoardPage() {
                   { icon: Radio,       label: 'وحدة التحكم',           sub: 'معالجة البيانات الحية',      color: '#6366f1', bg: 'from-indigo-500/20 to-indigo-600/10' },
                   { icon: ArrowUpRight,label: 'Edge Function',        sub: 'Supabase Webhook',      color: '#0ea5e9', bg: 'from-sky-500/20 to-sky-600/10'     },
                   { icon: Cpu,         label: 'generators_live_status', sub: 'Supabase DB table',   color: '#a855f7', bg: 'from-purple-500/20 to-purple-600/10' },
-                  { icon: BarChart3,   label: 'لوحة التحكم',          sub: 'S.P.G.M.S Dashboard',  color: '#f59e0b', bg: 'from-amber-500/20 to-amber-600/10'   },
+                  { icon: BarChart3,   label: 'لوحة التحكم',          sub: 'S.G.M Dashboard',  color: '#f59e0b', bg: 'from-amber-500/20 to-amber-600/10'   },
                 ].map((node, i, arr) => (
                   <div key={node.label} className="flex flex-col lg:flex-row items-center">
                     <motion.div

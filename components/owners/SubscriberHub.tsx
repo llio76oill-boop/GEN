@@ -105,7 +105,7 @@ function LiveRibbon({ meta }: { meta: OwnerMeta | null }) {
       pulse: false,
     },
     {
-      label: 'قناة ThingSpeak',
+      label: 'معرّف القناة الحية',
       value: meta.thingspeakChannel ? `CH-${meta.thingspeakChannel}` : 'غير مربوط',
       color: meta.thingspeakChannel ? '#f59e0b' : '#6b7280',
       icon: Zap,
@@ -167,7 +167,7 @@ function IdCardModal({
   });
 
   const waMessage = encodeURIComponent(
-    `مرحباً ${sub.full_name} 👋\n\nأهلاً بك في نظام إدارة الشبكة الكهربائية الذكية (S.P.G.M.S)\n\n` +
+    `مرحباً ${sub.full_name} 👋\n\nأهلاً بك في نظام إدارة الشبكة الكهربائية الذكية (S.G.M)\n\n` +
     `━━━━━━━━━━━━━━━━━━━━\n` +
     `🪪 *بيانات اشتراكك*\n` +
     `━━━━━━━━━━━━━━━━━━━━\n` +
@@ -223,7 +223,7 @@ function IdCardModal({
           <div className="px-5 pt-5 pb-3 flex items-center justify-between">
             <div>
               <p className="text-[10px] tracking-widest uppercase font-bold" style={{ color: 'rgba(167,139,250,0.7)' }}>
-                S.P.G.M.S
+                S.G.M
               </p>
               <p className="text-[11px] mt-0.5" style={{ color: 'rgba(196,181,253,0.8)', fontFamily: 'var(--font-ibm-arabic)' }}>
                 نظام إدارة الشبكة الكهربائية
@@ -378,21 +378,24 @@ function AddSubscriberModal({
     setSaving(true);
 
     try {
-      // Generate sequential sub code: SUB-{REGION}-{seq}
-      const { data: lastSub } = await supabase
-        .from('subscribers')
-        .select('sub_code')
-        .order('id', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Generate obfuscated sub code: SUB-G{genId}{3_rand}-{4_rand}
+      // e.g. SUB-G2N65-A11N  — hides subscriber identity and generator link
+      const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid confusion
+      const rand = (n: number) =>
+        Array.from({ length: n }, () => CHARS[Math.floor(Math.random() * CHARS.length)]).join('');
 
-      let newCode = 'SUB-A1-001';
-      if (lastSub?.sub_code) {
-        const match = lastSub.sub_code.match(/(\d+)$/);
-        const nextNum = match ? parseInt(match[1]) + 1 : 1;
-        const regionPart = meta.genArea.slice(0, 2);
-        newCode = `SUB-${regionPart}-${String(nextNum).padStart(3, '0')}`;
+      let newCode = '';
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const genPart  = `G${meta.ownedGenId ?? 0}${rand(3)}`;  // e.g. G1N65
+        const userPart = rand(4);                                  // e.g. A11N
+        const candidate = `SUB-${genPart}-${userPart}`;
+        const { count } = await supabase
+          .from('subscribers')
+          .select('id', { count: 'exact', head: true })
+          .eq('sub_code', candidate);
+        if (!count) { newCode = candidate; break; }
       }
+      if (!newCode) throw new Error('تعذّر توليد رمز فريد، يرجى المحاولة مجدداً');
 
       const { data: inserted, error } = await supabase
         .from('subscribers')

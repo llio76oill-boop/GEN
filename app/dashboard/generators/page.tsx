@@ -3,9 +3,10 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Search, Plus, Filter } from 'lucide-react';
+import { Search, Plus, Filter, Zap, Thermometer, Droplets, Wifi, AlertTriangle } from 'lucide-react';
 import { useGenerators, STATUS_LABEL, STATUS_COLOR, STATUS_BG, type GeneratorStatus } from '@/hooks/useGenerators';
 import SyncThingSpeakButton from '@/components/dashboard/SyncThingSpeakButton';
+import { LIVE_TELEMETRY } from '@/data/live-telemetry';
 
 const PAGE_SIZE = 20;
 const ALL_STATUSES: GeneratorStatus[] = ['online-grid', 'online-gen', 'fault', 'offline'];
@@ -80,6 +81,105 @@ export default function GeneratorsPage() {
             <p className="text-xs text-[var(--text-5)] mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>{s.label}</p>
           </div>
         ))}
+      </div>
+
+      {/* ── Live Telemetry ── */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <h2 className="text-sm font-semibold text-[var(--text-2)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
+            بيانات حية — {LIVE_TELEMETRY.length} مولد متصل
+          </h2>
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-mono" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)' }}>
+            LIVE
+          </span>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+          {LIVE_TELEMETRY.map((g, i) => {
+            const hasAlert = g.alerts.high_temp || g.alerts.low_oil || g.alerts.overload;
+            const fuelColor = g.generator.fuel_level_percent > 50 ? '#10b981' : g.generator.fuel_level_percent > 25 ? '#f59e0b' : '#ef4444';
+            const tempColor = g.generator.engine_temperature_c > 95 ? '#ef4444' : g.generator.engine_temperature_c > 85 ? '#f59e0b' : '#10b981';
+            return (
+              <motion.div
+                key={g.device_id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="flex-shrink-0 w-52 rounded-2xl p-3.5 space-y-3"
+                style={{
+                  background: 'var(--surface)',
+                  border: hasAlert ? '1px solid rgba(249,115,22,0.4)' : '1px solid var(--border-subtle)',
+                }}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold font-mono text-[var(--text-1)]">{g.device_id}</span>
+                  <div className="flex items-center gap-1.5">
+                    {hasAlert && <AlertTriangle className="w-3 h-3 text-orange-400" />}
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ background: g.generator.running ? '#10b981' : '#6b7280', boxShadow: g.generator.running ? '0 0 6px #10b981' : 'none' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Power + Voltage row */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl p-2" style={{ background: 'rgba(59,130,246,0.08)' }}>
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <Zap className="w-3 h-3 text-blue-400" />
+                      <span className="text-[9px] text-[var(--text-5)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>طاقة</span>
+                    </div>
+                    <p className="text-sm font-bold text-blue-400 font-mono">{g.electrical.power_kw} <span className="text-[9px] font-normal">kW</span></p>
+                  </div>
+                  <div className="rounded-xl p-2" style={{ background: 'rgba(168,85,247,0.08)' }}>
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <Zap className="w-3 h-3 text-purple-400" />
+                      <span className="text-[9px] text-[var(--text-5)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>جهد</span>
+                    </div>
+                    <p className="text-sm font-bold text-purple-400 font-mono">{g.electrical.voltage.toFixed(1)} <span className="text-[9px] font-normal">V</span></p>
+                  </div>
+                </div>
+
+                {/* Fuel level */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1">
+                      <Droplets className="w-3 h-3" style={{ color: fuelColor }} />
+                      <span className="text-[9px] text-[var(--text-5)]" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>الوقود</span>
+                    </div>
+                    <span className="text-[10px] font-bold font-mono" style={{ color: fuelColor }}>{g.generator.fuel_level_percent.toFixed(1)}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${g.generator.fuel_level_percent}%`, background: fuelColor }}
+                    />
+                  </div>
+                </div>
+
+                {/* Temp + Signal */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <Thermometer className="w-3 h-3" style={{ color: tempColor }} />
+                    <span className="text-[10px] font-mono" style={{ color: tempColor }}>{g.generator.engine_temperature_c.toFixed(1)}°C</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Wifi className="w-3 h-3 text-[var(--text-5)]" />
+                    <span className="text-[10px] font-mono text-[var(--text-5)]">{g.signal.wifi_rssi} dBm</span>
+                  </div>
+                </div>
+
+                {/* Current + Energy + Mode */}
+                <div className="flex items-center justify-between pt-1 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <span className="text-[9px] text-[var(--text-5)] font-mono">{g.electrical.current.toFixed(0)} A</span>
+                  <span className="text-[9px] text-[var(--text-5)] font-mono">{g.electrical.energy_kwh_today.toFixed(2)} kWh</span>
+                  <span className="text-[9px] font-mono" style={{ color: '#10b981' }}>{g.generator.mode}</span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Toolbar */}
@@ -190,7 +290,7 @@ export default function GeneratorsPage() {
                   </td>
                   <td className="px-4 py-2.5">
                     <Link
-                      href={`/dashboard/generators/G-${String(gen.id).padStart(4, '0')}`}
+                      href={`/dashboard/generators/${gen.id}`}
                       className="px-2.5 py-1 rounded-lg text-xs transition-colors text-[var(--text-4)] hover:text-[var(--text-1)] hover:bg-white/[0.06] inline-block"
                       style={{ fontFamily: 'var(--font-ibm-arabic)' }}
                     >

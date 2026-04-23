@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Map, BarChart3, Zap, Settings,
-  FileText, Bell, ShieldCheck, Activity, Users, Globe, Cpu, Gauge, DollarSign,
+  FileText, Bell, ShieldCheck, Activity, Users, Globe, Cpu, DollarSign,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -18,7 +18,7 @@ const NAV = [
   { icon: Users,           label: 'أصحاب المولدات',   href: '/dashboard/owners',            badge: null,  external: false },
   { icon: DollarSign,      label: 'التسعير والفواتير', href: '/dashboard/billing',           badge: null,  external: false },
   { icon: Cpu,             label: 'لوحة الإرسال الحي',            href: '/dashboard/thingsboard',  badge: 'LIVE', external: false },
-  { icon: Gauge,           label: 'مركز القيادة والسيطرة',         href: '/dashboard/thingspeak',   badge: 'LIVE', external: false },
+
   { icon: Bell,            label: 'الإشعارات',         href: '/dashboard/notifications',    badge: 12,    external: false },
   { icon: ShieldCheck,     label: 'الأمان والوصول',   href: '/dashboard/security',          badge: null,  external: false },
   { icon: FileText,        label: 'التوثيق والسجلات', href: '/dashboard/docs',              badge: null,  external: false },

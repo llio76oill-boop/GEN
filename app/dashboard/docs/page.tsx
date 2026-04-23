@@ -10,10 +10,10 @@ interface Entry {
 const CHANGELOG: Entry[] = [
   {
     version: 'v2.3.0', date: 'أبريل 2026',
-    title: 'لوحة القياسات الديناميكية — تعيين حقول ThingSpeak',
+    title: 'لوحة القياسات الديناميكية — تعيين الحقول الحية',
     items: [
-      { type: 'feature', text: 'عمود JSONB جديد: thingspeak_fields_map — يخزن تعيين حقول القناة (field1→voltage…)' },
-      { type: 'enhance', text: 'Edge Function محدَّثة: تستخرج field1…field8 من ThingSpeak وتحفظها في JSONB' },
+      { type: 'feature', text: 'عمود JSONB جديد: fields_map — يخزن تعيين حقول قناة البيانات (field1→voltage…)' },
+      { type: 'enhance', text: 'Edge Function محدَّثة: تستخرج field1…field8 من القناة وتحفظها في JSONB' },
       { type: 'feature', text: 'مكوّن DynamicTelemetryDashboard: يعرض widgets مختلفة تلقائياً حسب نوع الحقل' },
       { type: 'feature', text: 'Voltage: مقياس نصف دائري (0–300V) أحمر تحت 180V، أخضر في المدى الطبيعي' },
       { type: 'feature', text: 'Current: مخطط Sparkline خطي مع إشارة الاتجاه (+/−)' },
@@ -23,20 +23,20 @@ const CHANGELOG: Entry[] = [
   },
   {
     version: 'v2.2.0', date: 'أبريل 2026',
-    title: 'اكتشاف القنوات التلقائي — مزامنة ThingSpeak',
+    title: 'اكتشاف القنوات التلقائي — مزامنة الأجهزة',
     items: [
-      { type: 'feature', text: 'Supabase Edge Function جديدة: sync-thingspeak-channels — تجلب كل القنوات بـ User API Key وتزامنها مع owned_generators' },
+      { type: 'feature', text: 'Supabase Edge Function جديدة: sync-channels — تجلب كل القنوات بـ User API Key وتزامنها مع owned_generators' },
       { type: 'feature', text: 'منطق upsert: INSERT للقنوات الجديدة، UPDATE للقنوات الموجودة (الاسم + read key)' },
-      { type: 'feature', text: 'استخراج تلقائي لـ Read API Key من مصفوفة api_keys في استجابة ThingSpeak' },
-      { type: 'feature', text: 'زر "مزامنة مع ThingSpeak" في صفحة المولدات مع حالات تحميل وإشعار toast' },
-      { type: 'enhance', text: 'THINGSPEAK_USER_API محفوظ في Secrets — لا يُكشف أبداً في الواجهة الأمامية' },
+      { type: 'feature', text: 'استخراج تلقائي لـ Read API Key من مصفوفة api_keys في استجابة القناة' },
+      { type: 'feature', text: 'زر "مزامنة الأجهزة" في صفحة المولدات مع حالات تحميل وإشعار toast' },
+      { type: 'enhance', text: 'USER_API_KEY محفوظ في Secrets — لا يُكشف أبداً في الواجهة الأمامية' },
     ],
   },
   {
     version: 'v2.1.0', date: 'أبريل 2026',
     title: 'غرفة التحكم الكاملة + مركز المشتركين',
     items: [
-      { type: 'feature', text: 'قراءة حالة المولد مباشرةً من ThingSpeak (جهد حي كل 30 ثانية) — لا تشغيل يدوي' },
+      { type: 'feature', text: 'قراءة حالة المولد مباشرةً من القناة الحية (جهد حي كل 30 ثانية) — لا تشغيل يدوي' },
       { type: 'feature', text: 'مركز المشتركين: تسجيل جديد، بطاقة رقمية QR، مشاركة واتساب بمعلومات الاشتراك' },
       { type: 'feature', text: 'إضافة مشغلين بالمناوبات من غرفة التحكم مباشرة' },
       { type: 'feature', text: 'تصدير المشتركين CSV + شريط حالة مباشر (ساعات التشغيل، المشغلون، القناة)' },
@@ -127,7 +127,7 @@ export default function DocsPage() {
           سجل التحديثات
         </h1>
         <p className="text-sm text-[var(--text-4)] mt-0.5" style={{ fontFamily: 'var(--font-ibm-arabic)' }}>
-          نظام إدارة الشبكة الكهربائية الذكية — S.P.G.M.S
+          نظام إدارة الشبكة الكهربائية الذكية — S.G.M
         </p>
       </div>
 
