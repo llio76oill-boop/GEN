@@ -500,31 +500,26 @@ export default function OwnersPage() {
     );
   }, [search, owners]);
 
-  const totalGens = owners.reduce((s, o) => s + o.owned_generators.length, 0);
-  const totalOps  = owners.reduce(
-    (s, o) => s + o.owned_generators.reduce((ss, g) => ss + g.operators.length, 0),
+  const totalGens   = owners.reduce((s, o) => s + o.owned_generators.length, 0);
+  const activeGens  = owners.reduce(
+    (s, o) => s + o.owned_generators.filter((g) => g.status === 'online-grid' || g.status === 'online-gen').length,
     0,
   );
-  const onDuty = owners.reduce(
-    (s, o) =>
-      s + o.owned_generators.reduce(
-        (ss, g) => ss + g.operators.filter((op) => op.active).length,
-        0,
-      ),
+  const faultGens   = owners.reduce(
+    (s, o) => s + o.owned_generators.filter((g) => g.status === 'fault').length,
     0,
   );
-  const faults = owners.reduce(
-    (s, o) =>
-      s + o.owned_generators.filter((g) => g.status === 'fault' || g.status === 'offline').length,
+  const offlineGens = owners.reduce(
+    (s, o) => s + o.owned_generators.filter((g) => g.status === 'offline').length,
     0,
   );
 
   const STATS = [
-    { label: 'أصحاب المولدات', value: owners.length, color: '#a78bfa' },
-    { label: 'إجمالي المولدات', value: totalGens,     color: '#10b981' },
-    { label: 'المشغلون الكلي',  value: totalOps,      color: '#3b82f6' },
-    { label: 'على المناوبة',    value: onDuty,        color: '#10b981' },
-    { label: 'مولدات معطلة',   value: faults,        color: faults > 0 ? '#f97316' : '#10b981' },
+    { label: 'مولدات مشغّلة',  value: activeGens,     color: '#10b981' },
+    { label: 'مولدات معطلة',   value: faultGens,      color: faultGens  > 0 ? '#f97316' : '#6b7280' },
+    { label: 'غير متصلة',      value: offlineGens,    color: offlineGens > 0 ? '#ef4444' : '#6b7280' },
+    { label: 'إجمالي المولدات', value: totalGens,      color: '#3b82f6' },
+    { label: 'أصحاب المولدات', value: owners.length,  color: '#a78bfa' },
   ];
 
   return (
